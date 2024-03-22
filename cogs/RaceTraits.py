@@ -74,8 +74,8 @@ async def setup(bot):
 
 # Dwarf
 embed_dwarf = discord.Embed(title="Dwarf Traits",
-                             description="Your dwarf character has an assortment of inborn abilities, part and parcel of dwarven nature.",
-                             colour=0x6e1a01)
+                            description="Your dwarf character has an assortment of inborn abilities, part and parcel of dwarven nature.",
+                            colour=0x6e1a01)
 embed_dwarf.add_field(name="Ability score increase",
                       value="Your Constitution score increases by 2.",
                       inline=False)
@@ -114,8 +114,8 @@ embed_dwarf.add_field(name="Subrace",
                       inline=False)
 
 embed_hill_dwarf = discord.Embed(title="Hill Dwarf Traits",
-                                  description="As a hill dwarf, you have keen senses, deep intuition, and remarkable resilience. The gold dwarves of Faerûn in their mighty southern kingdom are hill dwarves, as are the exiled Neidar and the debased Klar of Krynn in the Dragonlance setting.",
-                                  colour=0x6e1a01)
+                                 description="As a hill dwarf, you have keen senses, deep intuition, and remarkable resilience. The gold dwarves of Faerûn in their mighty southern kingdom are hill dwarves, as are the exiled Neidar and the debased Klar of Krynn in the Dragonlance setting.",
+                                 colour=0x6e1a01)
 embed_hill_dwarf.add_field(name="Ability score increase",
                            value="Your Wisdom score increases by 1.",
                            inline=False)
@@ -124,8 +124,8 @@ embed_hill_dwarf.add_field(name="Dwarven Toughness",
                            inline=False)
 
 embed_mountain_dwarf = discord.Embed(title="Mountain Dwarf Traits",
-                                      description="As a mountain dwarf, you’re strong and hardy, accustomed to a difficult life in rugged terrain. You’re probably on the tall side (for a dwarf), and tend toward lighter coloration. The shield dwarves of northern Faerûn, as well as the ruling Hylar clan and the noble Daewar clan of Dragonlance, are mountain dwarves.",
-                                      colour=0x6e1a01)
+                                     description="As a mountain dwarf, you’re strong and hardy, accustomed to a difficult life in rugged terrain. You’re probably on the tall side (for a dwarf), and tend toward lighter coloration. The shield dwarves of northern Faerûn, as well as the ruling Hylar clan and the noble Daewar clan of Dragonlance, are mountain dwarves.",
+                                     colour=0x6e1a01)
 embed_mountain_dwarf.add_field(name="Ability score increase",
                                value="Your Strength score increases by 2.",
                                inline=False)
@@ -135,8 +135,8 @@ embed_mountain_dwarf.add_field(name="Dwarven Armor Training",
 
 # Elf
 embed_elf = discord.Embed(title="Elf Traits",
-                           description="Your elf character has a variety of natural abilities, the result of thousands of years of elven refinement.",
-                           colour=0x0ac91d)
+                          description="Your elf character has a variety of natural abilities, the result of thousands of years of elven refinement.",
+                          colour=0x0ac91d)
 embed_elf.add_field(name="Ability score increase",
                     value="Your Dexterity score increases by 2.",
                     inline=False)
@@ -172,8 +172,8 @@ embed_elf.add_field(name="Subrace",
                     inline=False)
 
 embed_high_elf = discord.Embed(title="High Elf Traits",
-                                description="As a high elf, you have a keen mind and a mastery of at least the basics of magic. In many of the worlds of D&D, there are two kinds of high elves. One type (which includes the gray elves and valley elves of Greyhawk, the Silvanesti of Dragonlance, and the sun elves of the Forgotten Realms) is haughty and reclusive, believing themselves to be superior to non-elves and even other elves. The other type (including the high elves of Greyhawk, the Qualinesti of Dragonlance, and the moon elves of the Forgotten Realms) are more common and more friendly, and often encountered among humans and other races. The sun elves of Faerûn (also called gold elves or sunrise elves) have bronze skin and hair of copper, black, or golden blond. Their eyes are golden, silver, or black. Moon elves (also called silver elves or gray elves) are much paler, with alabaster skin sometimes tinged with blue. They often have hair of silver-white, black, or blue, but various shades of blond, brown, and red are not uncommon. Their eyes are blue or green and flecked with gold.",
-                                colour=0x0ac91d)
+                               description="As a high elf, you have a keen mind and a mastery of at least the basics of magic. In many of the worlds of D&D, there are two kinds of high elves. One type (which includes the gray elves and valley elves of Greyhawk, the Silvanesti of Dragonlance, and the sun elves of the Forgotten Realms) is haughty and reclusive, believing themselves to be superior to non-elves and even other elves. The other type (including the high elves of Greyhawk, the Qualinesti of Dragonlance, and the moon elves of the Forgotten Realms) are more common and more friendly, and often encountered among humans and other races. The sun elves of Faerûn (also called gold elves or sunrise elves) have bronze skin and hair of copper, black, or golden blond. Their eyes are golden, silver, or black. Moon elves (also called silver elves or gray elves) are much paler, with alabaster skin sometimes tinged with blue. They often have hair of silver-white, black, or blue, but various shades of blond, brown, and red are not uncommon. Their eyes are blue or green and flecked with gold.",
+                               colour=0x0ac91d)
 embed_high_elf.add_field(name="Ability score increase",
                          value="Your Intelligence score increases by 1.",
                          inline=False)
@@ -188,8 +188,8 @@ embed_high_elf.add_field(name="Extra Language",
                          inline=False)
 
 embed_wood_elf = discord.Embed(title="Wood Elf Traits",
-                                description="As a wood elf, you have keen senses and intuition, and your fleet feet carry you quickly and stealthily through your native forests. This category includes the wild elves (grugach) of Greyhawk and the Kagonesti of Dragonlance, as well as the races called wood elves in Greyhawk and the Forgotten Realms. In Faerûn, wood elves (also called wild elves, green elves, or forest elves) are reclusive and distrusting of non-elves. Wood elves’ skin tends to be copperish in hue, sometimes with traces of green. Their hair tends toward browns and blacks, but it is occasionally blond or copper-colored. Their eyes are green, brown, or hazel.",
-                                colour=0x0ac91d)
+                               description="As a wood elf, you have keen senses and intuition, and your fleet feet carry you quickly and stealthily through your native forests. This category includes the wild elves (grugach) of Greyhawk and the Kagonesti of Dragonlance, as well as the races called wood elves in Greyhawk and the Forgotten Realms. In Faerûn, wood elves (also called wild elves, green elves, or forest elves) are reclusive and distrusting of non-elves. Wood elves’ skin tends to be copperish in hue, sometimes with traces of green. Their hair tends toward browns and blacks, but it is occasionally blond or copper-colored. Their eyes are green, brown, or hazel.",
+                               colour=0x0ac91d)
 embed_wood_elf.add_field(name="Ability score increase",
                          value="Your Wisdom score increases by 1.",
                          inline=False)
@@ -205,8 +205,8 @@ embed_wood_elf.add_field(name="Mask of the Wild",
 
 # Halfling
 embed_halfling = discord.Embed(title="Halfling Traits",
-                                description="Your halfling character has a number of traits in common with all other halflings.",
-                                colour=0x969696)
+                               description="Your halfling character has a number of traits in common with all other halflings.",
+                               colour=0x969696)
 embed_halfling.add_field(name="Ability score increase",
                          value="Your Dexterity score increases by 2.",
                          inline=False)
@@ -239,8 +239,8 @@ embed_halfling.add_field(name="Subrace",
                          inline=False)
 
 embed_lightfoot = discord.Embed(title="Lightfoot Trails",
-                                 description="As a lightfoot halfling, you can easily hide from notice, even using other people as cover. You’re inclined to be affable and get along well with others. In the Forgotten Realms, lightfoot halflings have spread the farthest and thus are the most common variety. Lightfoots are more prone to wanderlust than other halflings, and often dwell alongside other races or take up a nomadic life. In the world of Greyhawk, these halflings are called hairfeet or tallfellows.",
-                                 colour=0x969696)
+                                description="As a lightfoot halfling, you can easily hide from notice, even using other people as cover. You’re inclined to be affable and get along well with others. In the Forgotten Realms, lightfoot halflings have spread the farthest and thus are the most common variety. Lightfoots are more prone to wanderlust than other halflings, and often dwell alongside other races or take up a nomadic life. In the world of Greyhawk, these halflings are called hairfeet or tallfellows.",
+                                colour=0x969696)
 embed_lightfoot.add_field(name="Ability score increase",
                           value="Your Charisma score increases by 1.",
                           inline=False)
@@ -249,8 +249,8 @@ embed_lightfoot.add_field(name="Naturally Stealthy",
                           inline=False)
 
 embed_stout = discord.Embed(title="Stout Trails",
-                             description="As a stout halfling, you’re hardier than average and have some resistance to poison. Some say that stouts have dwarven blood. In the Forgotten Realms, these halflings are called stronghearts, and they’re most common in the south.",
-                             colour=0x969696)
+                            description="As a stout halfling, you’re hardier than average and have some resistance to poison. Some say that stouts have dwarven blood. In the Forgotten Realms, these halflings are called stronghearts, and they’re most common in the south.",
+                            colour=0x969696)
 embed_stout.add_field(name="Ability score increase",
                       value="Your Constitution score increases by 1.",
                       inline=False)
@@ -260,8 +260,8 @@ embed_stout.add_field(name="Stout Resilience",
 
 # Human
 embed_human = discord.Embed(title="Human Traits",
-                             description="It’s hard to make generalizations about humans, but your human character has these traits.",
-                             colour=0x1791fc)
+                            description="It’s hard to make generalizations about humans, but your human character has these traits.",
+                            colour=0x1791fc)
 embed_human.add_field(name="Ability score increase",
                       value="Your ability scores each increase by 1.",
                       inline=False)

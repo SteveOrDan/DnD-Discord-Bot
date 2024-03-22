@@ -5,7 +5,7 @@ import Campaign
 from ClassView import ClassView
 from RaceView import RaceView
 from data.CampaignState import CampaignState
-import CampaignMember
+from CampaignMember import CampaignMember
 import random
 
 import costants
@@ -33,7 +33,7 @@ class Game(commands.Cog):
             for user in arr:
                 await user.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
                 await user.add_roles(guild.get_role(costants.CHOOSING_ROLE_ROLE_ID))
-                await self.add_member_to_campaign(ctx=ctx, member=user)
+                await self.add_member_to_campaign(member=user)
 
             set_roles_ch = guild.get_channel(costants.SET_ROLES_CHAT_ID)
 
@@ -50,8 +50,8 @@ class Game(commands.Cog):
 
     @staticmethod
     # Creates CampaignMember object and adds it to the campaign's list of users and give him a special user role (saved attributes: member, member_Role)
-    async def add_member_to_campaign(ctx, member: discord.Member):
-        new_user = CampaignMember.CampaignMember()
+    async def add_member_to_campaign(member: discord.Member):
+        new_user = CampaignMember()
 
         new_user.member = member
 
@@ -112,7 +112,7 @@ class Game(commands.Cog):
     @commands.command()
     async def info(self, ctx):
         embed_info = discord.Embed(title="Basic Rules book download link",
-                                    url="https://dnd.wizards.com/what-is-dnd/basic-rules")
+                                   url="https://dnd.wizards.com/what-is-dnd/basic-rules")
         await ctx.channel.send(embed=embed_info)
 
     # Generate a random number as the sum of the 3 highest rolls of 4 d6
@@ -130,7 +130,7 @@ class Game(commands.Cog):
 
     # Generates the 6 stats for the user that uses the command, saves them and show them in the channels' name
     @commands.has_role("Adventurer")
-    @commands.command()
+    @commands.command(help="# Rolls stats for character build")
     async def roll(self, ctx):
         if ctx.channel.name == "roll-stats":
             stats = []
@@ -155,9 +155,9 @@ class Game(commands.Cog):
 
             curr_user.stats_set_num = 0
             curr_user.stats_set_bools = [False, False, False, False, False, False]
-            curr_user.stats_set_name.clear()
 
             await ctx.send(f"Use !set <STAT_NAME> to set each stat when you get asked.\n"
+                           "You can also use !swap <STAT_NAME_1> <STAT_NAME_2> to swap the value of two stats\n"
                            "STAT_NAME must be one of the 6 shown on the left.\n"
                            f"Which skill would you like to set to {curr_user.roll_list[curr_user.stats_set_num]}?")
 
@@ -165,7 +165,7 @@ class Game(commands.Cog):
             await ctx.channel.send("You can roll for stats only in the roll-stats channel")
 
     @commands.has_role("Adventurer")
-    @commands.command()
+    @commands.command(help="# Use default stats for character build. [15, 14, 13, 12, 10, 8]")
     async def default_stats(self, ctx):
         if ctx.channel.name == "roll-stats":
             curr_user = None
@@ -187,9 +187,9 @@ class Game(commands.Cog):
 
             curr_user.stats_set_num = 0
             curr_user.stats_set_bools = [False, False, False, False, False, False]
-            curr_user.stats_set_name.clear()
 
             await ctx.send(f"Use !set <STAT_NAME> to set each stat when you get asked.\n"
+                           "You can also use !swap <STAT_NAME_1> <STAT_NAME_2> to swap the value of two stats\n"
                            "STAT_NAME must be one of the 6 shown on the left.\n"
                            f"Which skill would you like to set to {curr_user.roll_list[curr_user.stats_set_num]}?")
 
@@ -197,7 +197,7 @@ class Game(commands.Cog):
             await ctx.channel.send("You can roll for stats only in the roll-stats channel")
 
     @commands.has_role("Adventurer")
-    @commands.command()
+    @commands.command(help="# Set a stat to a specified value")
     async def set(self, ctx, stat: str):
         if ctx.channel.name == "roll-stats":
             curr_user = None
@@ -233,9 +233,7 @@ class Game(commands.Cog):
                     await ctx.channel.send(f"{stat} stat cannot be found")
                     return
 
-                print("starting at: " + curr_user.stats_set_num)
                 curr_user.stats_set_num += 1
-                print(curr_user.stats_set_num)
 
                 if curr_user.stats_set_num >= 6:
                     await ctx.send("You have set all stats")
@@ -246,9 +244,9 @@ class Game(commands.Cog):
                 await ctx.channel.send("You have already set all stats")
 
     @commands.has_role("Adventurer")
-    @commands.command()
-    async def swap_roll(self, ctx, stat_1: str, stat_2: str):
-        curr_user: CampaignMember = None
+    @commands.command(help="# Swap two stats value")
+    async def swap(self, ctx, stat_1: str, stat_2: str):
+        curr_user = None
         for member in costants.curr_campaign.campaign_member_list:
             if member.member.id == ctx.message.author.id:
                 curr_user = member
@@ -256,8 +254,36 @@ class Game(commands.Cog):
         if curr_user is None:
             return
 
-        # Get and swap values
-        # ------------------------ TO DO ------------------------
+        stat_enum_1 = None
+        stat_enum_2 = None
+
+        for statEnum1 in StatTypeEnum:
+            if stat_1.__eq__(statEnum1.fullname):
+                stat_enum_1 = statEnum1
+
+        for statEnum2 in StatTypeEnum:
+            if stat_2.__eq__(statEnum2.fullname):
+                stat_enum_2 = statEnum2
+
+        if stat_enum_1 is None or stat_enum_2 is None:
+            await ctx.channel.send("At least one of the stats has not been recognised")
+            return
+
+        if curr_user.stats_set_bools[stat_enum_1.value] and curr_user.stats_set_bools[stat_enum_2.value]:
+            swap_temp = curr_user.rolled_stats[stat_enum_1.value]
+            curr_user.rolled_stats[stat_enum_1.value] = curr_user.rolled_stats[stat_enum_2.value]
+            curr_user.rolled_stats[stat_enum_2.value] = swap_temp
+
+            curr_user.update_total_stat(stat_enum_1.value)
+            curr_user.update_total_stat(stat_enum_2.value)
+
+            await curr_user.update_stat_ch(stat_enum_1.value)
+            await curr_user.update_stat_ch(stat_enum_2.value)
+
+            await ctx.channel.send(f"Swapped {stat_1} and {stat_2}")
+        else:
+            await ctx.channel.send("One of the stats is not set")
+            return
 
     # Command to type to start a vote to delete the campaign, if all members' vote is positive the server is reset
     @commands.command(help="# Sets up a vote for deleting the campaign")
@@ -279,7 +305,7 @@ class Game(commands.Cog):
             costants.curr_campaign.player_confirm_delete.clear()
             await self.reset_server(ctx)
 
-    @commands.command()
+    @commands.command(help="# ADMINISTRATOR ONLY: Reset server")
     @commands.has_permissions(administrator=True)
     async def reset_server(self, ctx):
         guild = ctx.guild
@@ -291,8 +317,7 @@ class Game(commands.Cog):
             await guild.get_channel(ch_id).purge()
 
         for ch_id in costants.PLAYERS_STR_STAT_CH_ID:
-            if guild.get_channel(ch_id).name is not "STR = 0":
-                await guild.get_channel(ch_id).edit(name="STR = 0")
+            await guild.get_channel(ch_id).edit(name="STR = 0")
 
         for ch_id in costants.PLAYERS_DEX_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="DEX = 0")
@@ -316,11 +341,10 @@ class Game(commands.Cog):
 
         costants.curr_campaign = None
 
-    @commands.command()
+    @commands.command(help="# Say hi")
     async def hello(self, ctx):
         await ctx.channel.send("Hello!")
 
 
 async def setup(bot):
     await bot.add_cog(Game(bot))
-    

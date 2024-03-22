@@ -1,5 +1,3 @@
-import discord
-
 from data.CampaignState import CampaignState
 
 
