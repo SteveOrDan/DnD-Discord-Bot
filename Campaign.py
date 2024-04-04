@@ -1,4 +1,10 @@
-from data.CampaignState import CampaignState
+import enum
+
+
+class CampaignState(enum.Enum):
+    NONE = -1,
+    CREATED = 0,
+    BUILDING_CHARACTER = 1
 
 
 class Campaign:

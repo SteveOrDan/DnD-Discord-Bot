@@ -1,6 +1,16 @@
 import discord
-from discord.ext import commands
 import costants
+import enum
+
+from discord.ext import commands
+
+
+class AdvClass(enum.Enum):
+    NONE = -1,
+    CLERIC = 0,
+    FIGHTER = 1,
+    ROGUE = 2,
+    WIZARD = 3
 
 
 class ClassFeatures(commands.Cog):

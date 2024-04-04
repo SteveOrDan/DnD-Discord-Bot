@@ -1,15 +1,14 @@
 import discord
 from discord.ext import commands
 import CampaignRoleView
-import Campaign
+from Campaign import Campaign, CampaignState
 from ClassView import ClassView
 from RaceView import RaceView
-from data.CampaignState import CampaignState
-from CampaignMember import CampaignMember
+from CampaignMember import CampaignMember, StatTypeEnum
 import random
+import data.Names as namesGenerator
 
 import costants
-from data.StatTypeEnum import StatTypeEnum
 
 
 class Game(commands.Cog):
@@ -27,7 +26,7 @@ class Game(commands.Cog):
             guild = ctx.guild
 
             # Set campaign object
-            costants.curr_campaign = Campaign.Campaign(user_num=len(arr), guild_id=guild.id)
+            costants.curr_campaign = Campaign(user_num=len(arr), guild_id=guild.id)
 
             # Assign campaign and user roles
             for user in arr:
@@ -341,9 +340,164 @@ class Game(commands.Cog):
 
         costants.curr_campaign = None
 
+    @commands.command()
+    async def set_name(self, ctx, charName: str):
+        if ctx.channel.name == "set-features":
+            await ctx.author.edit(nick=charName)
+
+    @commands.command()
+    async def set_alignment(self, ctx, alignment: str):
+        if ctx.channel.name == "set-features":
+            curr_user = None
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.member.id == ctx.message.author.id:
+                    curr_user = member
+
+            if curr_user is None:
+                return
+
+            if curr_user.alignment == "LG":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.LAWFUL_GOOD_ROLE_ID))
+            elif curr_user.alignment == "NG":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.NEUTRAL_GOOD_ROLE_ID))
+            elif curr_user.alignment == "CG":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.CHAOTIC_GOOD_ROLE_ID))
+            elif curr_user.alignment == "LN":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.LAWFUL_NEUTRAL_ROLE_ID))
+            elif curr_user.alignment == "N":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
+            elif curr_user.alignment == "CN":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.CHAOTIC_NEUTRAL_ROLE_ID))
+            elif curr_user.alignment == "LE":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.LAWFUL_EVIL_ROLE_ID))
+            elif curr_user.alignment == "NE":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.NEUTRAL_EVIL_ROLE_ID))
+            elif curr_user.alignment == "CE":
+                await curr_user.member.remove_roles(ctx.guild.get_role(costants.CHAOTIC_EVIL_ROLE_ID))
+
+            if alignment == "LG":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.LAWFUL_GOOD_ROLE_ID))
+                curr_user.alignment = "LG"
+            elif alignment == "NG":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_GOOD_ROLE_ID))
+                curr_user.alignment = "NG"
+            elif alignment == "CG":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.CHAOTIC_GOOD_ROLE_ID))
+                curr_user.alignment = "CG"
+            elif alignment == "LN":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.LAWFUL_NEUTRAL_ROLE_ID))
+                curr_user.alignment = "LN"
+            elif alignment == "N":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
+                curr_user.alignment = "N"
+            elif alignment == "CN":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.CHAOTIC_NEUTRAL_ROLE_ID))
+                curr_user.alignment = "CN"
+            elif alignment == "LE":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.LAWFUL_EVIL_ROLE_ID))
+                curr_user.alignment = "LE"
+            elif alignment == "NE":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_EVIL_ROLE_ID))
+                curr_user.alignment = "NE"
+            elif alignment == "CE":
+                await curr_user.member.add_roles(ctx.guild.get_role(costants.CHAOTIC_EVIL_ROLE_ID))
+                curr_user.alignment = "CE"
+            else:
+                await ctx.channel.send(f"{alignment} alignment not recognized.")
+
+    @commands.command()
+    async def set_bg(self, ctx, bg: str):
+        if ctx.channel.name == "set-features":
+            curr_user = None
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.member.id == ctx.message.author.id:
+                    curr_user = member
+
+            if curr_user is None:
+                return
+
+            curr_user.background = bg
+        else:
+            await ctx.channel.send("Cannot use the command in this channel.")
+
+    @commands.command()
+    async def set_traits(self, ctx, traits: str):
+        if ctx.channel.name == "set-features":
+            curr_user = None
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.member.id == ctx.message.author.id:
+                    curr_user = member
+
+            if curr_user is None:
+                return
+
+            curr_user.traits = traits
+
+    @commands.command()
+    async def set_ideals(self, ctx, ideals: str):
+        if ctx.channel.name == "set-features":
+            curr_user = None
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.member.id == ctx.message.author.id:
+                    curr_user = member
+
+            if curr_user is None:
+                return
+
+            curr_user.ideals = ideals
+
+    @commands.command()
+    async def set_bonds(self, ctx, bonds: str):
+        if ctx.channel.name == "set-features":
+            curr_user = None
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.member.id == ctx.message.author.id:
+                    curr_user = member
+
+            if curr_user is None:
+                return
+
+            curr_user.bonds = bonds
+
+    @commands.command()
+    async def set_flaws(self, ctx, flaws: str):
+        if ctx.channel.name == "set-features":
+            curr_user = None
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.member.id == ctx.message.author.id:
+                    curr_user = member
+
+            if curr_user is None:
+                return
+
+            curr_user.flaws = flaws
+
+    @commands.command()
+    async def get_bg(self, ctx, targetMember: discord.Member = -1):
+        if ctx.channel.name == "get-features":
+            curr_user = None
+
+            if targetMember == -1:
+                for member in costants.curr_campaign.campaign_member_list:
+                    if member.member.id == ctx.author.id:
+                        curr_user = member
+            else:
+                for member in costants.curr_campaign.campaign_member_list:
+                    if member.member.id == targetMember.id:
+                        curr_user = member
+
+            if curr_user is None:
+                return
+
+            await ctx.channel.send(curr_user.background)
+
     @commands.command(help="# Say hi")
     async def hello(self, ctx):
         await ctx.channel.send("Hello!")
+
+    @commands.command()
+    async def random_name(self, ctx, race: str, gender: str, clan: str = None):
+        await ctx.channel.send(namesGenerator.rand(race, gender, clan))
 
 
 async def setup(bot):

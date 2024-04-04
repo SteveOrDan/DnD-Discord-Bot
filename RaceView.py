@@ -1,7 +1,6 @@
 import discord
 import costants
-import CampaignMember
-from data.StatTypeEnum import StatTypeEnum
+from CampaignMember import CampaignMember, StatTypeEnum
 
 
 class RaceView(discord.ui.View):

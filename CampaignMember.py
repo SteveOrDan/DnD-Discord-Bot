@@ -1,4 +1,29 @@
 import discord
+import enum
+
+from data.Items import ItemsDataBase
+from data.Items.Armor import ArmorType
+from data.Purse import Purse
+
+
+class StatTypeEnum(enum.Enum):
+
+    NONE = -1, "NONE"
+    STR = 0, "STR"
+    DEX = 1, "DEX"
+    CON = 2, "CON"
+    INT = 3, "INT"
+    WIS = 4, "WIS"
+    CHA = 5, "CHA"
+
+    def __new__(cls, value, name):
+        member = object.__new__(cls)
+        member._value_ = value
+        member.fullname = name
+        return member
+
+    def __int__(self):
+        return self.value
 
 
 class CampaignMember:
@@ -6,6 +31,14 @@ class CampaignMember:
 
     isAdventurer: bool = False
     isDM: bool = False
+
+    race: str
+    alignment: str
+    background: str
+    traits: str
+    ideals: str
+    bonds: str
+    flaws: str
 
     # Display only stats channels
     STR_ch: discord.VoiceChannel = None
@@ -16,6 +49,10 @@ class CampaignMember:
     CHA_ch: discord.VoiceChannel = None
 
     # Stats
+    armor_class: int = 0
+
+    stats_modifiers: [int] = [0, 0, 0, 0, 0, 0]
+
     total_stats: [int] = [0, 0, 0, 0, 0, 0]
 
     rolled_stats: [int] = [0, 0, 0, 0, 0, 0]
@@ -29,7 +66,9 @@ class CampaignMember:
     stats_set_num: int = -1
     stats_set_bools = [False, False, False, False, False, False]
 
-    roll_list = []
+    roll_list: [int]
+
+    purse: Purse
 
     def update_total_stat(self, stat_index: int):
         self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.class_stats[stat_index] + self.equip_stats[stat_index]
@@ -39,23 +78,36 @@ class CampaignMember:
             self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.class_stats[stat_index] + self.equip_stats[stat_index]
 
     async def update_stat_ch(self, stat_index: int):
-        if stat_index == 0:
-            await self.STR_ch.edit(name=f'STR = {self.total_stats[stat_index]}')
-        elif stat_index == 1:
-            await self.DEX_ch.edit(name=f'DEX = {self.total_stats[stat_index]}')
-        elif stat_index == 2:
-            await self.CON_ch.edit(name=f'CON = {self.total_stats[stat_index]}')
-        elif stat_index == 3:
-            await self.INT_ch.edit(name=f'INT = {self.total_stats[stat_index]}')
-        elif stat_index == 4:
-            await self.WIS_ch.edit(name=f'WIS = {self.total_stats[stat_index]}')
-        elif stat_index == 5:
-            await self.CHA_ch.edit(name=f'CHA = {self.total_stats[stat_index]}')
+        stat_channels = {
+            0: (self.STR_ch, 'STR'),
+            1: (self.DEX_ch, 'DEX'),
+            2: (self.CON_ch, 'CON'),
+            3: (self.INT_ch, 'INT'),
+            4: (self.WIS_ch, 'WIS'),
+            5: (self.CHA_ch, 'CHA')
+        }
+
+        channel, stat_name = stat_channels.get(stat_index)
+        if channel:
+            await channel.edit(name=f'{stat_name} = {self.total_stats[stat_index]}')
 
     async def update_all_stat_ch(self):
-        await self.update_stat_ch(0)
-        await self.update_stat_ch(1)
-        await self.update_stat_ch(2)
-        await self.update_stat_ch(3)
-        await self.update_stat_ch(4)
-        await self.update_stat_ch(5)
+        for i in range(6):
+            await self.update_stat_ch(i)
+
+    def update_stats_modifiers(self):
+        for i in range(len(self.stats_modifiers)):
+            self.stats_modifiers[i] = (self.total_stats[i] - 10) // 2
+
+    def equip_armor(self, armor: str):
+        currArmor = ItemsDataBase.armors.get(armor)
+
+        if currArmor is None:
+            return
+
+        self.armor_class = currArmor.armor_class
+
+        if currArmor.armor_type == ArmorType.LIGHT:
+            self.armor_class += self.stats_modifiers[1]
+        elif currArmor.armor_type == ArmorType.MEDIUM:
+            self.armor_class += min(self.stats_modifiers[1], 2)
