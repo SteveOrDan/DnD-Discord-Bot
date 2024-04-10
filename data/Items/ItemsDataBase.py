@@ -1,8 +1,7 @@
 
 from data.Cost import Cost
 from data.Dice import D4, D6, D8
-from data.Items.Armor import Armor, ArmorType
-from data.Items.Weapon import Weapon, WeaponType, WeaponProperty
+from data.Items.Items import Weapon, WeaponType, WeaponProperty, ArmorType, Armor
 from data.Purse import CoinType
 
 weapons = {
@@ -34,3 +33,12 @@ armors = {
 }
 
 shield = Armor(ArmorType.SHIELD, "Shield", Cost(10, CoinType.GP), 2)
+
+
+def get_item(item_name: str):
+    item = weapons.get(item_name) or armors.get(item_name)
+
+    if item is None and item_name != shield.name:
+        return None
+
+    return item or shield

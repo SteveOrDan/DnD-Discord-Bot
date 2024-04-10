@@ -45,4 +45,10 @@ class Campaign:
 
     def remove_ready_player(self):
         self.ready_players_num -= 1
+
+    def get_member(self, member_name: str):
+        for member in self.campaign_member_list:
+            if member.member.name == member_name:
+                return member
+        return None
         

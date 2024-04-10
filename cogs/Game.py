@@ -3,17 +3,167 @@ from discord.ext import commands
 import CampaignRoleView
 from Campaign import Campaign, CampaignState
 from ClassView import ClassView
-from RaceView import RaceView
+from RaceView import RaceView, RaceTypeEnum
 from CampaignMember import CampaignMember, StatTypeEnum
 import random
 import data.Names as namesGenerator
 
 import costants
+from data import Transactions
+from data.Dice import D4
+from data.Items import ItemsDataBase
+from data.Items.Items import Item
+from data.Purse import Purse, enum_from_str
+
+
+def get_user(member: discord.Member):
+    for user in costants.curr_campaign.campaign_member_list:
+        if user.member.id == member.id:
+            return user
+    return None
+
+
+async def send_char_embed(ctx, member: CampaignMember):
+    embed = discord.Embed(title=member.member.nick, description="Character sheet", color=0x00ff00)
+    embed.add_field(name="Strength", value=f"{member.total_stats[0]}", inline=True)
+    embed.add_field(name="Dexterity", value=f"{member.total_stats[1]}", inline=True)
+    embed.add_field(name="Constitution", value=f"{member.total_stats[2]}", inline=True)
+    embed.add_field(name="Intelligence", value=f"{member.total_stats[3]}", inline=True)
+    embed.add_field(name="Wisdom", value=f"{member.total_stats[4]}", inline=True)
+    embed.add_field(name="Charisma", value=f"{member.total_stats[5]}", inline=True)
+
+    embed.add_field(name="Armor Class", value=f"{member.armor_class}", inline=False)
+
+    embed.add_field(name="Alignment", value=f"{member.alignment}", inline=False)
+
+    embed.add_field(name="Bonds", value=f"{member.bonds}", inline=False)
+
+    embed.add_field(name="Flaws", value=f"{member.flaws}", inline=False)
+
+    embed.add_field(name="Ideals", value=f"{member.ideals}", inline=False)
+
+    embed.add_field(name="Traits", value=f"{member.traits}", inline=False)
+
+    embed.add_field(name="Background", value=f"{member.background}", inline=False)
+
+    embed.add_field(name="Purse", value=f"{member.purse.toString()}", inline=False)
+
+    await ctx.send(embed=embed)
 
 
 class Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.command(help="# Quick 2 players set up. Testing purposes only.")
+    async def qps(self, ctx, dm: discord.Member, adv: discord.Member, char_class: str, char_race: str,
+                  str_stat: int, dex_stat: int, con_stat: int, int_stat: int, wis_stat: int, cha_stat: int):
+        guild = ctx.guild
+
+        # Set campaign object
+        costants.curr_campaign = Campaign(user_num=2, guild_id=guild.id)
+
+        # Assign campaign and user roles
+        await dm.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
+        await self.add_member_to_campaign(member=dm)
+
+        await adv.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
+        await self.add_member_to_campaign(member=adv)
+
+        # Assign DM role
+        await dm.add_roles(guild.get_role(costants.DM_ROLE_ID))
+
+        # Assign Adventurers role
+        await adv.add_roles(guild.get_role(costants.ADVENTURER_ROLE_ID))
+
+        # Quick character creation
+        max_stat_points = 27
+
+        scores_costs = {
+            8: 0,
+            9: 1,
+            10: 2,
+            11: 3,
+            12: 4,
+            13: 5,
+            14: 7,
+            15: 9
+        }
+
+        races = {
+            "dwarf": RaceTypeEnum.DWARF,
+            "mountain dwarf": RaceTypeEnum.MOUNTAIN_DWARF,
+            "hill dwarf": RaceTypeEnum.HILL_DWARF,
+            "elf": RaceTypeEnum.ELF,
+            "high elf": RaceTypeEnum.HIGH_ELF,
+            "wood elf": RaceTypeEnum.WOOD_ELF,
+            "halfling": RaceTypeEnum.HALFLING,
+            "lightfoot": RaceTypeEnum.LIGHTFOOT,
+            "stout": RaceTypeEnum.STOUT,
+            "human": RaceTypeEnum.HUMAN
+        }
+
+        classes = {
+            "cleric": costants.CLERIC_ROLE_ID,
+            "fighter": costants.FIGHTER_ROLE_ID,
+            "rogue": costants.ROGUE_ROLE_ID,
+            "wizard": costants.WIZARD_ROLE_ID
+        }
+
+        char_race = char_race.lower()
+        char_class = char_class.lower()
+
+        total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + scores_costs[wis_stat] + scores_costs[cha_stat]
+
+        if total_cost > max_stat_points:
+            await ctx.send(f"Total cost of stats ({total_cost}) is greater than the maximum allowed (27).")
+            return
+
+        if not races.__contains__(char_race):
+            await ctx.send("Invalid race.")
+            return
+
+        if not classes.__contains__(char_class):
+            await ctx.send("Invalid class.")
+            return
+
+        curr_user = get_user(adv)
+
+        if curr_user is None:
+            await ctx.send("No user found")
+            return
+
+        curr_user.stats_set_num = 6
+
+        curr_user.race = char_race
+        curr_user.char_class = char_class
+
+        curr_user.rolled_stats = [str_stat, dex_stat, con_stat, int_stat, wis_stat, cha_stat]
+
+        _race = races.get(char_race)
+        curr_user.race_stats = [_race.get_str(), _race.get_dex(), _race.get_con(), _race.get_int(), _race.get_wis(),
+                                _race.get_cha()]
+
+        curr_user.update_all_total_stat()
+        curr_user.update_stats_modifiers()
+
+        if curr_user.char_class == "fighter" or curr_user.char_class == "cleric":
+            curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
+        else:
+            curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
+
+        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(char_class)))
+        await curr_user.member.add_roles(ctx.guild.get_role(_race.get_role_id()))
+
+        curr_user.alignment = "N"
+        curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
+        curr_user.background = "Background"
+        curr_user.traits = "Traits"
+        curr_user.ideals = "Ideals"
+        curr_user.bonds = "Bonds"
+        curr_user.flaws = "Flaws"
+
+        await send_char_embed(ctx, curr_user)
 
     # Create campaign
     @commands.command(help="# Create campaign (at least 3 members)")
@@ -97,6 +247,7 @@ class Game(commands.Cog):
             for user in costants.curr_campaign.campaign_member_list:
                 if user.isAdventurer:
                     await user.member.add_roles(ctx.guild.get_role(costants.PLAYER_ROLES_ID[i]))
+                    user.player_num = i + 1
                     user.STR_ch = ctx.guild.get_channel(costants.PLAYERS_STR_STAT_CH_ID[i])
                     user.DEX_ch = ctx.guild.get_channel(costants.PLAYERS_DEX_STAT_CH_ID[i])
                     user.CON_ch = ctx.guild.get_channel(costants.PLAYERS_CON_STAT_CH_ID[i])
@@ -341,13 +492,16 @@ class Game(commands.Cog):
         costants.curr_campaign = None
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_name(self, ctx, charName: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             await ctx.author.edit(nick=charName)
+            await ctx.message.delete()
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_alignment(self, ctx, alignment: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
             for member in costants.curr_campaign.campaign_member_list:
                 if member.member.id == ctx.message.author.id:
@@ -356,58 +510,35 @@ class Game(commands.Cog):
             if curr_user is None:
                 return
 
-            if curr_user.alignment == "LG":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.LAWFUL_GOOD_ROLE_ID))
-            elif curr_user.alignment == "NG":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.NEUTRAL_GOOD_ROLE_ID))
-            elif curr_user.alignment == "CG":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.CHAOTIC_GOOD_ROLE_ID))
-            elif curr_user.alignment == "LN":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.LAWFUL_NEUTRAL_ROLE_ID))
-            elif curr_user.alignment == "N":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
-            elif curr_user.alignment == "CN":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.CHAOTIC_NEUTRAL_ROLE_ID))
-            elif curr_user.alignment == "LE":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.LAWFUL_EVIL_ROLE_ID))
-            elif curr_user.alignment == "NE":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.NEUTRAL_EVIL_ROLE_ID))
-            elif curr_user.alignment == "CE":
-                await curr_user.member.remove_roles(ctx.guild.get_role(costants.CHAOTIC_EVIL_ROLE_ID))
+            alignment_roles = {
+                "LG": costants.LAWFUL_GOOD_ROLE_ID,
+                "NG": costants.NEUTRAL_GOOD_ROLE_ID,
+                "CG": costants.CHAOTIC_GOOD_ROLE_ID,
+                "LN": costants.LAWFUL_NEUTRAL_ROLE_ID,
+                "N": costants.NEUTRAL_ROLE_ID,
+                "CN": costants.CHAOTIC_NEUTRAL_ROLE_ID,
+                "LE": costants.LAWFUL_EVIL_ROLE_ID,
+                "NE": costants.NEUTRAL_EVIL_ROLE_ID,
+                "CE": costants.CHAOTIC_EVIL_ROLE_ID
+            }
 
-            if alignment == "LG":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.LAWFUL_GOOD_ROLE_ID))
-                curr_user.alignment = "LG"
-            elif alignment == "NG":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_GOOD_ROLE_ID))
-                curr_user.alignment = "NG"
-            elif alignment == "CG":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.CHAOTIC_GOOD_ROLE_ID))
-                curr_user.alignment = "CG"
-            elif alignment == "LN":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.LAWFUL_NEUTRAL_ROLE_ID))
-                curr_user.alignment = "LN"
-            elif alignment == "N":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
-                curr_user.alignment = "N"
-            elif alignment == "CN":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.CHAOTIC_NEUTRAL_ROLE_ID))
-                curr_user.alignment = "CN"
-            elif alignment == "LE":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.LAWFUL_EVIL_ROLE_ID))
-                curr_user.alignment = "LE"
-            elif alignment == "NE":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_EVIL_ROLE_ID))
-                curr_user.alignment = "NE"
-            elif alignment == "CE":
-                await curr_user.member.add_roles(ctx.guild.get_role(costants.CHAOTIC_EVIL_ROLE_ID))
-                curr_user.alignment = "CE"
-            else:
+            role_id = alignment_roles.get(alignment)
+
+            if role_id is None:
                 await ctx.channel.send(f"{alignment} alignment not recognized.")
+                return
+
+            if curr_user.alignment:
+                await curr_user.member.remove_roles(ctx.guild.get_role(role_id))
+
+            await curr_user.member.add_roles(ctx.guild.get_role(role_id))
+            curr_user.alignment = alignment
+            await ctx.message.delete()
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_bg(self, ctx, bg: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
             for member in costants.curr_campaign.campaign_member_list:
                 if member.member.id == ctx.message.author.id:
@@ -417,12 +548,14 @@ class Game(commands.Cog):
                 return
 
             curr_user.background = bg
+            await ctx.message.delete()
         else:
             await ctx.channel.send("Cannot use the command in this channel.")
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_traits(self, ctx, traits: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
             for member in costants.curr_campaign.campaign_member_list:
                 if member.member.id == ctx.message.author.id:
@@ -432,10 +565,12 @@ class Game(commands.Cog):
                 return
 
             curr_user.traits = traits
+            await ctx.message.delete()
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_ideals(self, ctx, ideals: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
             for member in costants.curr_campaign.campaign_member_list:
                 if member.member.id == ctx.message.author.id:
@@ -445,10 +580,12 @@ class Game(commands.Cog):
                 return
 
             curr_user.ideals = ideals
+            await ctx.message.delete()
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_bonds(self, ctx, bonds: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
             for member in costants.curr_campaign.campaign_member_list:
                 if member.member.id == ctx.message.author.id:
@@ -458,10 +595,12 @@ class Game(commands.Cog):
                 return
 
             curr_user.bonds = bonds
+            await ctx.message.delete()
 
     @commands.command()
+    @commands.has_role("Adventurer")
     async def set_flaws(self, ctx, flaws: str):
-        if ctx.channel.name == "set-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
             for member in costants.curr_campaign.campaign_member_list:
                 if member.member.id == ctx.message.author.id:
@@ -471,10 +610,11 @@ class Game(commands.Cog):
                 return
 
             curr_user.flaws = flaws
+            await ctx.message.delete()
 
     @commands.command()
     async def get_bg(self, ctx, targetMember: discord.Member = -1):
-        if ctx.channel.name == "get-features":
+        if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
             curr_user = None
 
             if targetMember == -1:
@@ -491,14 +631,243 @@ class Game(commands.Cog):
 
             await ctx.channel.send(curr_user.background)
 
-    @commands.command(help="# Say hi")
-    async def hello(self, ctx):
-        await ctx.channel.send("Hello!")
-
     @commands.command()
     async def random_name(self, ctx, race: str, gender: str, clan: str = None):
         await ctx.channel.send(namesGenerator.rand(race, gender, clan))
 
+    @commands.command()
+    @commands.has_role("Adventurer")
+    async def complete_char(self, ctx):
+        curr_user = None
+        for member in costants.curr_campaign.campaign_member_list:
+            if member.member.id == ctx.message.author.id:
+                curr_user = member
+
+        if curr_user is None:
+            return
+
+        if curr_user.race is None:
+            await ctx.send("You must choose a race first.")
+            return
+
+        if curr_user.char_class is None:
+            await ctx.send("You must choose a class first.")
+            return
+
+        if curr_user.alignment is None:
+            await ctx.send("You must choose an alignment first.")
+            return
+
+        curr_user.update_all_total_stat()
+
+        if curr_user.stats_set_num < 6:
+            await ctx.send("You must set all stats first.")
+            return
+
+        await curr_user.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
+
+        player_roles = {
+            1: costants.P1_ROLE_ID,
+            2: costants.P2_ROLE_ID,
+            3: costants.P3_ROLE_ID,
+            4: costants.P4_ROLE_ID,
+            5: costants.P5_ROLE_ID
+        }
+
+        curr_user.member.remove_roles(ctx.guild.get_role(player_roles.get(curr_user.player_num)))
+
+        await send_char_embed(ctx, curr_user)
+
+        if curr_user.char_class == "fighter" or curr_user.char_class == "cleric":
+            curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
+        else:
+            curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
+
+    @commands.command(help="# Quick character creation. "
+                           "Template: !quick_char_create <class> <race> STR DEX CON INT WIS CHA")
+    @commands.has_role("Adventurer")
+    async def quick_char_create(self, ctx, char_class: str, char_race: str, str_stat: int, dex_stat: int, con_stat: int,
+                                int_stat: int, wis_stat: int, cha_stat: int):
+        max_stat_points = 27
+
+        scores_costs = {
+            8: 0,
+            9: 1,
+            10: 2,
+            11: 3,
+            12: 4,
+            13: 5,
+            14: 7,
+            15: 9
+        }
+
+        races = {
+            "dwarf": RaceTypeEnum.DWARF,
+            "mountain dwarf": RaceTypeEnum.MOUNTAIN_DWARF,
+            "hill dwarf": RaceTypeEnum.HILL_DWARF,
+            "elf": RaceTypeEnum.ELF,
+            "high elf": RaceTypeEnum.HIGH_ELF,
+            "wood elf": RaceTypeEnum.WOOD_ELF,
+            "halfling": RaceTypeEnum.HALFLING,
+            "lightfoot": RaceTypeEnum.LIGHTFOOT,
+            "stout": RaceTypeEnum.STOUT,
+            "human": RaceTypeEnum.HUMAN
+        }
+
+        classes = {
+            "cleric": costants.CLERIC_ROLE_ID,
+            "fighter": costants.FIGHTER_ROLE_ID,
+            "rogue": costants.ROGUE_ROLE_ID,
+            "wizard": costants.WIZARD_ROLE_ID
+        }
+
+        total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + \
+                     scores_costs[wis_stat] + scores_costs[cha_stat]
+
+        if total_cost > max_stat_points:
+            await ctx.send(f"Total cost of stats ({total_cost}) is greater than the maximum allowed (27).")
+            return
+
+        if not races.__contains__(char_race):
+            await ctx.send("Invalid race.")
+            return
+
+        if not classes.__contains__(char_class):
+            await ctx.send("Invalid class.")
+            return
+
+        curr_user = None
+        for member in costants.curr_campaign.campaign_member_list:
+            if member.member.id == ctx.author.id:
+                curr_user = member
+
+        curr_user.stats_set_num = 6
+
+        curr_user.race = char_race
+
+        curr_user.rolled_stats = [str_stat, dex_stat, con_stat, int_stat, wis_stat, cha_stat]
+
+        _race = races.get(char_race)
+        curr_user.race_stats = [_race.get_str(), _race.get_dex(), _race.get_con(), _race.get_int(), _race.get_wis(),
+                                _race.get_cha()]
+
+        curr_user.update_all_total_stat()
+        curr_user.update_stats_modifiers()
+
+        if curr_user.char_class == "fighter" or curr_user.char_class == "cleric":
+            curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
+        else:
+            curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
+
+        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(char_class)))
+        await curr_user.member.add_roles(ctx.guild.get_role(_race.get_role_id()))
+        await curr_user.member.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
+
+    @commands.command(help="# Send DM request to buy an item")
+    @commands.has_role("Adventurer")
+    async def request_buy(self, ctx, item: str):
+        if Transactions.contains(ctx.author.display_name, item):
+            await ctx.send("Transaction already exists")
+            return
+
+        Transactions.add(ctx.author.display_name, item)
+
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        _item: Item = ItemsDataBase.get_item(item)
+
+        await ctx.guild.get_channel(costants.DM_CHAT_ID).send(f"{ctx.author.display_name} request to buy {item}.\n"
+                                                              f"{item} default price: {_item.cost}.\n"
+                                                              f"{ctx.author.display_name} purse: {curr_user.purse.toString()}.\n"
+                                                              f"Type !set_price <@user> <item> <price> <currency> to set the price."
+                                                              f"You can also use !set_price <@user> <item> \"default\" to set the default price.\n"
+                                                              f"===============================================================================")
+
+    @commands.command(help="# Send the adventurer the price of the requested item")
+    @commands.has_role("DM")
+    async def set_price(self, ctx, member: str, item: str, price: str, currency: str = None):
+        transaction = Transactions.get(member, item)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        if price == "default":
+            _item: Item = ItemsDataBase.get_item(item)
+            price = _item.cost.value
+            currency = _item.cost.coinType
+
+        transaction.price = int(price)
+        transaction.coin_type = enum_from_str(currency)
+
+        transaction.state = Transactions.TransactionState.PRICE_SET
+
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {item} to {price} {currency}")
+
+    @commands.command(help="# Accept item price and buy it")
+    @commands.has_role("Adventurer")
+    async def accept_trade(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        if curr_user.purse.remove(transaction.price, transaction.coin_type.value):
+            await ctx.send(f"{item} bought for {transaction.price} {transaction.coin_type}")
+            curr_user.inventory.append(item)
+        else:
+            await ctx.send("Not enough money")
+
+        Transactions.remove(ctx.author.display_name, item)
+
+    @commands.command(help="# Refuse item price and close transaction")
+    @commands.has_role("Adventurer")
+    async def refuse_trade(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        Transactions.remove(ctx.author.display_name, item)
+        await ctx.send(f"{item} transaction closed")
+
+    @commands.command()
+    @commands.has_role("DM")
+    async def get_all_transactions(self, ctx):
+        await ctx.send(Transactions.transaction_list_to_str())
+
+    @commands.command()
+    async def get_purse(self, ctx, member: discord.Member):
+        curr_user = get_user(member)
+
+        if curr_user is None:
+            return
+
+        await ctx.send(f"{curr_user.member.display_name}'s purse: {curr_user.purse.toString()}")
+
 
 async def setup(bot):
     await bot.add_cog(Game(bot))
+
+# TODO: Roll for:
+#  - ability checks: STRENGTH: ATHLETICS
+#               DEXTERITY: ACROBATICS, SLEIGHT OF HAND, STEALTH
+#               INTELLIGENCE: ARCANA, HISTORY, INVESTIGATION, NATURE, RELIGION
+#               WISDOM: ANIMAL HANDLING, INSIGHT, MEDICINE, PERCEPTION, SURVIVAL
+#               CHARISMA: DECEPTION, INTIMIDATION, PERFORMANCE, PERSUASION
+#  - initiative: D20 + DEX -> create attack queue
+#  - attack: D20 + STR/DEX + proficiency bonus
+#       - 20: Success
+#       - 1: Critical failure
+#  - damage: Weapon damage (Dice)
+#  - saving throws: D20 + STR/DEX/CON/INT/WIS/CHA + proficiency bonus

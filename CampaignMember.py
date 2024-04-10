@@ -2,7 +2,7 @@ import discord
 import enum
 
 from data.Items import ItemsDataBase
-from data.Items.Armor import ArmorType
+from data.Items.Items import Weapon, Armor, ArmorType
 from data.Purse import Purse
 
 
@@ -29,10 +29,20 @@ class StatTypeEnum(enum.Enum):
 class CampaignMember:
     member: discord.Member
 
+    inventory: [str] = []
+    equipped_weapon: Weapon
+    equipped_armor: Armor
+    has_shield: bool = False
+
+    equipment_weight: int
+
     isAdventurer: bool = False
     isDM: bool = False
 
+    player_num: int
+
     race: str
+    char_class: str
     alignment: str
     background: str
     traits: str
@@ -59,8 +69,6 @@ class CampaignMember:
 
     race_stats: [int] = [0, 0, 0, 0, 0, 0]
 
-    class_stats: [int] = [0, 0, 0, 0, 0, 0]
-
     equip_stats: [int] = [0, 0, 0, 0, 0, 0]
 
     stats_set_num: int = -1
@@ -71,11 +79,11 @@ class CampaignMember:
     purse: Purse
 
     def update_total_stat(self, stat_index: int):
-        self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.class_stats[stat_index] + self.equip_stats[stat_index]
+        self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.equip_stats[stat_index]
 
     def update_all_total_stat(self):
         for stat_index in range(len(self.total_stats)):
-            self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.class_stats[stat_index] + self.equip_stats[stat_index]
+            self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.equip_stats[stat_index]
 
     async def update_stat_ch(self, stat_index: int):
         stat_channels = {

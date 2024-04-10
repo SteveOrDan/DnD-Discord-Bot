@@ -25,11 +25,32 @@ class WeaponType(enum.Enum):
     MARTIAL_RANGED = 3
 
 
-class Weapon:
+class ArmorType(enum.Enum):
+    LIGHT = 0
+    MEDIUM = 1
+    HEAVY = 2
+    SHIELD = 3
+
+
+class Item:
+    name: str
+    cost: Cost
+
+
+class Weapon(Item):
 
     def __init__(self, weaponType: WeaponType, weaponName: str, cost: Cost, damage: Dice, properties: list):
         self.weaponType = weaponType
-        self.weaponName = weaponName
+        self.name = weaponName
         self.cost = cost
         self.damage = damage
         self.properties = properties
+
+
+class Armor(Item):
+    def __init__(self, armor_type: ArmorType, name: str, cost: Cost, armor_class: int):
+        self.armor_type = armor_type
+        self.name = name
+        self.cost = cost
+        self.armor_class = armor_class
+

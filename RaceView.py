@@ -1,6 +1,44 @@
 import discord
 import costants
+import enum
 from CampaignMember import CampaignMember, StatTypeEnum
+
+
+class RaceTypeEnum(enum.Enum):
+    DWARF = ("dwarf", 0, 0, 2, 0, 0, 0, costants.DWARF_ROLE_ID)
+    HILL_DWARF = ("hill dwarf", 0, 0, 2, 1, 0, 0, costants.HILL_DWARF_ROLE_ID)
+    MOUNTAIN_DWARF = ("mountain dwarf", 2, 0, 2, 0, 0, 0, costants.MOUNTAIN_DWARF_ROLE_ID)
+    ELF = ("elf", 0, 2, 0, 0, 0, 0, costants.ELF_ROLE_ID)
+    HIGH_ELF = ("high elf", 0, 2, 0, 1, 0, 0, costants.HIGH_ELF_ROLE_ID)
+    WOOD_ELF = ("wood elf", 0, 2, 0, 0, 1, 0, costants.WOOD_ELF_ROLE_ID)
+    HALFLING = ("halfling", 0, 2, 0, 0, 0, 0, costants.HALFLING_ROLE_ID)
+    STOUT = ("stout", 0, 2, 1, 0, 0, 0, costants.STOUT_ROLE_ID)
+    LIGHTFOOT = ("lightfoot", 0, 2, 0, 0, 0, 1, costants.LIGHTFOOT_ROLE_ID)
+    HUMAN = ("human", 1, 1, 1, 1, 1, 1, costants.HUMAN_ROLE_ID)
+
+    def get_name(self):
+        return self.value[0]
+
+    def get_str(self):
+        return self.value[1]
+
+    def get_dex(self):
+        return self.value[2]
+
+    def get_con(self):
+        return self.value[3]
+
+    def get_int(self):
+        return self.value[4]
+
+    def get_wis(self):
+        return self.value[5]
+
+    def get_cha(self):
+        return self.value[6]
+
+    def get_role_id(self):
+        return self.value[7]
 
 
 class RaceView(discord.ui.View):
@@ -17,9 +55,15 @@ class RaceView(discord.ui.View):
         return None
 
     @staticmethod
-    async def reset_race_stats(campaign_member: CampaignMember):
-        for stat in campaign_member.race_stats:
-            stat = 0
+    def set_race(campaign_member: CampaignMember, RaceType: RaceTypeEnum):
+        campaign_member.race = RaceType.get_name()
+
+        campaign_member.race_stats[StatTypeEnum.STR.value] = RaceType.get_str()
+        campaign_member.race_stats[StatTypeEnum.DEX.value] = RaceType.get_dex()
+        campaign_member.race_stats[StatTypeEnum.CON.value] = RaceType.get_con()
+        campaign_member.race_stats[StatTypeEnum.INT.value] = RaceType.get_int()
+        campaign_member.race_stats[StatTypeEnum.WIS.value] = RaceType.get_wis()
+        campaign_member.race_stats[StatTypeEnum.CHA.value] = RaceType.get_cha()
 
     async def select(self, role: discord.Role, interaction: discord.Interaction):
         if interaction.user.id in costants.curr_campaign.players_selected_race:
@@ -51,8 +95,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.CON.value] = 2
+            self.set_race(curr_user, RaceTypeEnum.DWARF)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -66,9 +109,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.CON.value] = 2
-            curr_user.race_stats[StatTypeEnum.WIS.value] = 1
+            self.set_race(curr_user, RaceTypeEnum.HILL_DWARF)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -82,9 +123,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.CON.value] = 2
-            curr_user.race_stats[StatTypeEnum.STR.value] = 2
+            self.set_race(curr_user, RaceTypeEnum.MOUNTAIN_DWARF)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -98,8 +137,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 2
+            self.set_race(curr_user, RaceTypeEnum.ELF)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -113,9 +151,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 2
-            curr_user.race_stats[StatTypeEnum.INT.value] = 1
+            self.set_race(curr_user, RaceTypeEnum.HIGH_ELF)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -129,9 +165,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 2
-            curr_user.race_stats[StatTypeEnum.WIS.value] = 1
+            self.set_race(curr_user, RaceTypeEnum.WOOD_ELF)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -145,8 +179,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 2
+            self.set_race(curr_user, RaceTypeEnum.HALFLING)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -160,9 +193,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 2
-            curr_user.race_stats[StatTypeEnum.CON.value] = 1
+            self.set_race(curr_user, RaceTypeEnum.STOUT)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -176,9 +207,7 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 2
-            curr_user.race_stats[StatTypeEnum.CHA.value] = 1
+            self.set_race(curr_user, RaceTypeEnum.LIGHTFOOT)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
@@ -192,16 +221,9 @@ class RaceView(discord.ui.View):
         curr_user = await self.get_campaign_member(interaction)
 
         if curr_user is not None:
-            await self.reset_race_stats(curr_user)
-            curr_user.race_stats[StatTypeEnum.STR.value] = 1
-            curr_user.race_stats[StatTypeEnum.DEX.value] = 1
-            curr_user.race_stats[StatTypeEnum.CON.value] = 1
-            curr_user.race_stats[StatTypeEnum.INT.value] = 1
-            curr_user.race_stats[StatTypeEnum.WIS.value] = 1
-            curr_user.race_stats[StatTypeEnum.CHA.value] = 1
+            self.set_race(curr_user, RaceTypeEnum.HUMAN)
 
             curr_user.update_all_total_stat()
             await curr_user.update_all_stat_ch()
 
         await self.select(role=self.guild.get_role(costants.HUMAN_ROLE_ID), interaction=interaction)
-        

@@ -6,3 +6,6 @@ class Cost:
     def __init__(self, value: int, coinType: CoinType):
         self.value = value
         self.coinType = coinType
+
+    def __str__(self):
+        return f'{self.value} {self.coinType.name}'

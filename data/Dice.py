@@ -7,6 +7,12 @@ class Dice:
     def throw(self):
         return randint(1, self.faces)
 
+    def throw_n(self, n):
+        res = 0
+        for i in range(n):
+            res += self.throw()
+        return res
+
 
 class D4(Dice):
     faces = 4
@@ -30,3 +36,7 @@ class D12(Dice):
 
 class D20(Dice):
     faces = 20
+
+
+class D100(Dice):
+    faces = 100
