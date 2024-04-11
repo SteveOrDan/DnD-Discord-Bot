@@ -1,5 +1,8 @@
 import enum
 
+from CampaignMember import CampaignMember
+from data.Encounter import Encounter
+
 
 class CampaignState(enum.Enum):
     NONE = -1,
@@ -24,6 +27,8 @@ class Campaign:
 
     campaign_member_list = []
 
+    curr_encounter: Encounter = None
+
     has_dm_already: bool = False
 
     players_selected_race = []
@@ -35,7 +40,7 @@ class Campaign:
         self.has_dm_already = False
         self.campaign_state = CampaignState.CREATED
 
-    def check_if_can_start_campaign(self):
+    def check_if_can_start_campaign(self) -> bool:
         if self.players_num == self.ready_players_num and self.has_dm_already:
             return True
         return False
@@ -46,7 +51,7 @@ class Campaign:
     def remove_ready_player(self):
         self.ready_players_num -= 1
 
-    def get_member(self, member_name: str):
+    def get_member(self, member_name: str) -> CampaignMember | None:
         for member in self.campaign_member_list:
             if member.member.name == member_name:
                 return member

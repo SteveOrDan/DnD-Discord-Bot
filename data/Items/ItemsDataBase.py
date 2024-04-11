@@ -1,41 +1,45 @@
-
 from data.Cost import Cost
 from data.Dice import D4, D6, D8
-from data.Items.Items import Weapon, WeaponType, WeaponProperty, ArmorType, Armor
+from data.Items.Items import Weapon, WeaponType, WeaponProperty, ArmorType, Armor, ArmorStr, DamageType
 from data.Purse import CoinType
 
 weapons = {
-    "Club": Weapon(WeaponType.SIMPLE_MELEE, "Club", Cost(1, CoinType.SP), D4(), [WeaponProperty.LIGHT]),
-    "Dagger": Weapon(WeaponType.SIMPLE_MELEE, "Dagger", Cost(2, CoinType.GP), D4(), [WeaponProperty.FINESSE, WeaponProperty.LIGHT, WeaponProperty.THROWN_20_60]),
+    "club": Weapon(WeaponType.SIMPLE_MELEE, "club", Cost(1, CoinType.SP), D4(), 1, DamageType.BLUDGEONING, 2, [WeaponProperty.LIGHT]),
+    "dagger": Weapon(WeaponType.SIMPLE_MELEE, "dagger", Cost(2, CoinType.GP), D4(), 1, DamageType.PIERCING, 1, [WeaponProperty.FINESSE, WeaponProperty.LIGHT, WeaponProperty.THROWN_20_60]),
 
-    "Shortbow": Weapon(WeaponType.SIMPLE_RANGED, "Shortbow", Cost(25, CoinType.GP), D6(), [WeaponProperty.AMMUNITION_80_320, WeaponProperty.TWO_HANDED]),
-    "Dart": Weapon(WeaponType.SIMPLE_RANGED, "Dart", Cost(5, CoinType.CP), D4(), [WeaponProperty.FINESSE, WeaponProperty.THROWN_20_60]),
+    "shortbow": Weapon(WeaponType.SIMPLE_RANGED, "shortbow", Cost(25, CoinType.GP), D6(), 1, DamageType.PIERCING, 2, [WeaponProperty.AMMUNITION_80_320, WeaponProperty.TWO_HANDED]),
+    "dart": Weapon(WeaponType.SIMPLE_RANGED, "dart", Cost(5, CoinType.CP), D4(), 1, DamageType.PIERCING, 0.25, [WeaponProperty.FINESSE, WeaponProperty.THROWN_20_60]),
 
-    "Battleaxe": Weapon(WeaponType.MARTIAL_MELEE, "Battleaxe", Cost(10, CoinType.GP), D8(), [WeaponProperty.VERSATILE]),
-    "Flail": Weapon(WeaponType.MARTIAL_MELEE, "Flail", Cost(10, CoinType.GP), D8(), []),
+    "battleaxe": Weapon(WeaponType.MARTIAL_MELEE, "battleaxe", Cost(10, CoinType.GP), D8(), 1, DamageType.SLASHING, 4, [WeaponProperty.VERSATILE]),
+    "flail": Weapon(WeaponType.MARTIAL_MELEE, "flail", Cost(10, CoinType.GP), D8(), 1, DamageType.BLUDGEONING, 2, []),
 
-    "Crossbow(hand)": Weapon(WeaponType.MARTIAL_RANGED, "Crossbow(hand)", Cost(75, CoinType.GP), D6(), [WeaponProperty.AMMUNITION_30_120, WeaponProperty.LIGHT, WeaponProperty.LOADING]),
-    "Longbow": Weapon(WeaponType.MARTIAL_RANGED, "Longbow", Cost(50, CoinType.GP), D8(), [WeaponProperty.AMMUNITION_150_600, WeaponProperty.HEAVY, WeaponProperty.TWO_HANDED]),
+    "crossbow hand": Weapon(WeaponType.MARTIAL_RANGED, "crossbow hand", Cost(75, CoinType.GP), D6(), 1, DamageType.PIERCING, 3, [WeaponProperty.AMMUNITION_30_120, WeaponProperty.LIGHT, WeaponProperty.LOADING]),
+    "longbow": Weapon(WeaponType.MARTIAL_RANGED, "longbow", Cost(50, CoinType.GP), D8(), 1, DamageType.PIERCING, 2, [WeaponProperty.AMMUNITION_150_600, WeaponProperty.HEAVY, WeaponProperty.TWO_HANDED]),
 }
 
 armors = {
-    "Padded": Armor(ArmorType.LIGHT, "Padded", Cost(5, CoinType.GP), 11),
-    "Leather": Armor(ArmorType.LIGHT, "Leather", Cost(10, CoinType.GP), 11),
-    "Studded leather": Armor(ArmorType.LIGHT, "Studded leather", Cost(45, CoinType.GP), 12),
+    "padded": Armor(ArmorType.LIGHT, "padded", Cost(5, CoinType.GP), 11, 8),
+    "leather": Armor(ArmorType.LIGHT, "leather", Cost(10, CoinType.GP), 11, 10),
+    "studded leather": Armor(ArmorType.LIGHT, "studded leather", Cost(45, CoinType.GP), 12, 13),
 
-    "Hide": Armor(ArmorType.MEDIUM, "Hide", Cost(10, CoinType.GP), 12),
-    "Chain shirt": Armor(ArmorType.MEDIUM, "Chain shirt", Cost(50, CoinType.GP), 13),
-    "Scale mail": Armor(ArmorType.MEDIUM, "Scale mail", Cost(50, CoinType.GP), 14),
+    "hide": Armor(ArmorType.MEDIUM, "hide", Cost(10, CoinType.GP), 12, 12),
+    "chain shirt": Armor(ArmorType.MEDIUM, "chain shirt", Cost(50, CoinType.GP), 13, 20),
+    "scale mail": Armor(ArmorType.MEDIUM, "scale mail", Cost(50, CoinType.GP), 14, 45),
+    "breastplate": Armor(ArmorType.MEDIUM, "breastplate", Cost(400, CoinType.GP), 14, 20),
+    "half plate": Armor(ArmorType.MEDIUM, "half plate", Cost(750, CoinType.GP), 15, 40),
 
-    "Ring mail": Armor(ArmorType.HEAVY, "Ring mail", Cost(30, CoinType.GP), 14),
-    "Chain mail": Armor(ArmorType.HEAVY, "Chain mail", Cost(75, CoinType.GP), 16),
-    "Plate": Armor(ArmorType.HEAVY, "Plate", Cost(1500, CoinType.GP), 18),
+    "ring mail": Armor(ArmorType.HEAVY, "ring mail", Cost(30, CoinType.GP), 14, 40),
+    "chain mail": Armor(ArmorType.HEAVY, "chain mail", Cost(75, CoinType.GP), 16, 55, ArmorStr.STR13),
+    "splint": Armor(ArmorType.HEAVY, "splint", Cost(200, CoinType.GP), 17, 60, ArmorStr.STR15),
+    "plate": Armor(ArmorType.HEAVY, "plate", Cost(1500, CoinType.GP), 18, 65, ArmorStr.STR15),
 }
 
-shield = Armor(ArmorType.SHIELD, "Shield", Cost(10, CoinType.GP), 2)
+shield = Armor(ArmorType.SHIELD, "shield", Cost(10, CoinType.GP), 2, 6)
 
 
-def get_item(item_name: str):
+def get_item(item_name: str) -> Weapon | Armor | None:
+    item_name = item_name.lower()
+
     item = weapons.get(item_name) or armors.get(item_name)
 
     if item is None and item_name != shield.name:

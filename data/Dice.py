@@ -4,10 +4,10 @@ from random import randint
 class Dice:
     faces: int
 
-    def throw(self):
+    def throw(self) -> int:
         return randint(1, self.faces)
 
-    def throw_n(self, n):
+    def throw_n(self, n) -> int:
         res = 0
         for i in range(n):
             res += self.throw()

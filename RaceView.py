@@ -1,44 +1,6 @@
 import discord
 import costants
-import enum
-from CampaignMember import CampaignMember, StatTypeEnum
-
-
-class RaceTypeEnum(enum.Enum):
-    DWARF = ("dwarf", 0, 0, 2, 0, 0, 0, costants.DWARF_ROLE_ID)
-    HILL_DWARF = ("hill dwarf", 0, 0, 2, 1, 0, 0, costants.HILL_DWARF_ROLE_ID)
-    MOUNTAIN_DWARF = ("mountain dwarf", 2, 0, 2, 0, 0, 0, costants.MOUNTAIN_DWARF_ROLE_ID)
-    ELF = ("elf", 0, 2, 0, 0, 0, 0, costants.ELF_ROLE_ID)
-    HIGH_ELF = ("high elf", 0, 2, 0, 1, 0, 0, costants.HIGH_ELF_ROLE_ID)
-    WOOD_ELF = ("wood elf", 0, 2, 0, 0, 1, 0, costants.WOOD_ELF_ROLE_ID)
-    HALFLING = ("halfling", 0, 2, 0, 0, 0, 0, costants.HALFLING_ROLE_ID)
-    STOUT = ("stout", 0, 2, 1, 0, 0, 0, costants.STOUT_ROLE_ID)
-    LIGHTFOOT = ("lightfoot", 0, 2, 0, 0, 0, 1, costants.LIGHTFOOT_ROLE_ID)
-    HUMAN = ("human", 1, 1, 1, 1, 1, 1, costants.HUMAN_ROLE_ID)
-
-    def get_name(self):
-        return self.value[0]
-
-    def get_str(self):
-        return self.value[1]
-
-    def get_dex(self):
-        return self.value[2]
-
-    def get_con(self):
-        return self.value[3]
-
-    def get_int(self):
-        return self.value[4]
-
-    def get_wis(self):
-        return self.value[5]
-
-    def get_cha(self):
-        return self.value[6]
-
-    def get_role_id(self):
-        return self.value[7]
+from CampaignMember import CampaignMember, StatTypeEnum, RaceTypeEnum
 
 
 class RaceView(discord.ui.View):
@@ -47,7 +9,7 @@ class RaceView(discord.ui.View):
         self.guild = guild
 
     @staticmethod
-    async def get_campaign_member(interaction: discord.Interaction):
+    async def get_campaign_member(interaction: discord.Interaction) -> CampaignMember | None:
         for member in costants.curr_campaign.campaign_member_list:
             if member.member.id == interaction.user.id:
                 return member
@@ -56,7 +18,7 @@ class RaceView(discord.ui.View):
 
     @staticmethod
     def set_race(campaign_member: CampaignMember, RaceType: RaceTypeEnum):
-        campaign_member.race = RaceType.get_name()
+        campaign_member.race = RaceType
 
         campaign_member.race_stats[StatTypeEnum.STR.value] = RaceType.get_str()
         campaign_member.race_stats[StatTypeEnum.DEX.value] = RaceType.get_dex()
@@ -64,6 +26,10 @@ class RaceView(discord.ui.View):
         campaign_member.race_stats[StatTypeEnum.INT.value] = RaceType.get_int()
         campaign_member.race_stats[StatTypeEnum.WIS.value] = RaceType.get_wis()
         campaign_member.race_stats[StatTypeEnum.CHA.value] = RaceType.get_cha()
+
+        campaign_member.race_speed = RaceType.get_speed()
+
+        campaign_member.race_proficiencies = RaceType.get_race_proficiencies()
 
     async def select(self, role: discord.Role, interaction: discord.Interaction):
         if interaction.user.id in costants.curr_campaign.players_selected_race:

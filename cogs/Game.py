@@ -4,19 +4,22 @@ import CampaignRoleView
 from Campaign import Campaign, CampaignState
 from ClassView import ClassView
 from RaceView import RaceView, RaceTypeEnum
-from CampaignMember import CampaignMember, StatTypeEnum
+from CampaignMember import CampaignMember, StatTypeEnum, AdvClass
 import random
 import data.Names as namesGenerator
 
 import costants
 from data import Transactions
-from data.Dice import D4
+from data.Dice import D4, D20
+from data.Encounter import Encounter
 from data.Items import ItemsDataBase
-from data.Items.Items import Item
+from data.Items.Items import Item, ArmorStr
+from data.MonstersDataBase import MonsterState
 from data.Purse import Purse, enum_from_str
+from data.Transactions import TransactionType
 
 
-def get_user(member: discord.Member):
+def get_user(member: discord.Member) -> CampaignMember | None:
     for user in costants.curr_campaign.campaign_member_list:
         if user.member.id == member.id:
             return user
@@ -56,7 +59,7 @@ class Game(commands.Cog):
         self.bot = bot
 
     @commands.command(help="# Quick 2 players set up. Testing purposes only.")
-    async def qps(self, ctx, dm: discord.Member, adv: discord.Member, char_class: str, char_race: str,
+    async def qps(self, ctx, dm: discord.Member, adv: discord.Member, adv_class: str, char_race: str,
                   str_stat: int, dex_stat: int, con_stat: int, int_stat: int, wis_stat: int, cha_stat: int):
         guild = ctx.guild
 
@@ -104,14 +107,14 @@ class Game(commands.Cog):
         }
 
         classes = {
-            "cleric": costants.CLERIC_ROLE_ID,
-            "fighter": costants.FIGHTER_ROLE_ID,
-            "rogue": costants.ROGUE_ROLE_ID,
-            "wizard": costants.WIZARD_ROLE_ID
+            "cleric": AdvClass.CLERIC,
+            "fighter": AdvClass.FIGHTER,
+            "rogue": AdvClass.ROGUE,
+            "wizard": AdvClass.WIZARD
         }
 
         char_race = char_race.lower()
-        char_class = char_class.lower()
+        adv_class = adv_class.lower()
 
         total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + scores_costs[wis_stat] + scores_costs[cha_stat]
 
@@ -123,7 +126,7 @@ class Game(commands.Cog):
             await ctx.send("Invalid race.")
             return
 
-        if not classes.__contains__(char_class):
+        if not classes.__contains__(adv_class):
             await ctx.send("Invalid class.")
             return
 
@@ -135,33 +138,40 @@ class Game(commands.Cog):
 
         curr_user.stats_set_num = 6
 
-        curr_user.race = char_race
-        curr_user.char_class = char_class
+        _race = races.get(char_race)
+        curr_user.race = _race
+
+        curr_user.adv_class = classes.get(adv_class)
 
         curr_user.rolled_stats = [str_stat, dex_stat, con_stat, int_stat, wis_stat, cha_stat]
 
-        _race = races.get(char_race)
         curr_user.race_stats = [_race.get_str(), _race.get_dex(), _race.get_con(), _race.get_int(), _race.get_wis(),
                                 _race.get_cha()]
+
+        curr_user.race_speed = _race.get_speed()
+
+        curr_user.update_total_speed()
 
         curr_user.update_all_total_stat()
         curr_user.update_stats_modifiers()
 
-        if curr_user.char_class == "fighter" or curr_user.char_class == "cleric":
+        if curr_user.adv_class == "fighter" or curr_user.adv_class == "cleric":
             curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
         else:
             curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
 
-        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(char_class)))
+        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(adv_class).get_role_id()))
         await curr_user.member.add_roles(ctx.guild.get_role(_race.get_role_id()))
 
         curr_user.alignment = "N"
-        curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
+        await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
         curr_user.background = "Background"
         curr_user.traits = "Traits"
         curr_user.ideals = "Ideals"
         curr_user.bonds = "Bonds"
         curr_user.flaws = "Flaws"
+
+        curr_user.hit_points = curr_user.adv_class.get_hit_dice().throw() + curr_user.stats_modifiers[2]
 
         await send_char_embed(ctx, curr_user)
 
@@ -267,7 +277,7 @@ class Game(commands.Cog):
 
     # Generate a random number as the sum of the 3 highest rolls of 4 d6
     @staticmethod
-    def roll_stat():
+    def roll_stat() -> int:
         stat = []
         res = 0
 
@@ -281,7 +291,7 @@ class Game(commands.Cog):
     # Generates the 6 stats for the user that uses the command, saves them and show them in the channels' name
     @commands.has_role("Adventurer")
     @commands.command(help="# Rolls stats for character build")
-    async def roll(self, ctx):
+    async def roll_stats(self, ctx):
         if ctx.channel.name == "roll-stats":
             stats = []
             for i in range(6):
@@ -650,7 +660,7 @@ class Game(commands.Cog):
             await ctx.send("You must choose a race first.")
             return
 
-        if curr_user.char_class is None:
+        if curr_user.adv_class is None:
             await ctx.send("You must choose a class first.")
             return
 
@@ -658,13 +668,11 @@ class Game(commands.Cog):
             await ctx.send("You must choose an alignment first.")
             return
 
-        curr_user.update_all_total_stat()
-
         if curr_user.stats_set_num < 6:
             await ctx.send("You must set all stats first.")
             return
 
-        await curr_user.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
+        await curr_user.member.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
 
         player_roles = {
             1: costants.P1_ROLE_ID,
@@ -676,17 +684,26 @@ class Game(commands.Cog):
 
         curr_user.member.remove_roles(ctx.guild.get_role(player_roles.get(curr_user.player_num)))
 
-        await send_char_embed(ctx, curr_user)
+        curr_user.race_speed = curr_user.race.get_speed()
 
-        if curr_user.char_class == "fighter" or curr_user.char_class == "cleric":
+        curr_user.update_total_speed()
+
+        curr_user.update_all_total_stat()
+        curr_user.update_stats_modifiers()
+
+        if curr_user.adv_class == AdvClass.FIGHTER or curr_user.adv_class == AdvClass.CLERIC:
             curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
         else:
             curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
 
+        curr_user.hit_points = curr_user.adv_class.get_hit_dice().throw() + curr_user.stats_modifiers[2]
+
+        await send_char_embed(ctx, curr_user)
+
     @commands.command(help="# Quick character creation. "
                            "Template: !quick_char_create <class> <race> STR DEX CON INT WIS CHA")
     @commands.has_role("Adventurer")
-    async def quick_char_create(self, ctx, char_class: str, char_race: str, str_stat: int, dex_stat: int, con_stat: int,
+    async def quick_char_create(self, ctx, adv_class: str, char_race: str, str_stat: int, dex_stat: int, con_stat: int,
                                 int_stat: int, wis_stat: int, cha_stat: int):
         max_stat_points = 27
 
@@ -715,24 +732,27 @@ class Game(commands.Cog):
         }
 
         classes = {
-            "cleric": costants.CLERIC_ROLE_ID,
-            "fighter": costants.FIGHTER_ROLE_ID,
-            "rogue": costants.ROGUE_ROLE_ID,
-            "wizard": costants.WIZARD_ROLE_ID
+            "cleric": AdvClass.CLERIC,
+            "fighter": AdvClass.FIGHTER,
+            "rogue": AdvClass.ROGUE,
+            "wizard": AdvClass.WIZARD
         }
 
-        total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + \
-                     scores_costs[wis_stat] + scores_costs[cha_stat]
+        total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + scores_costs[wis_stat] + scores_costs[cha_stat]
 
         if total_cost > max_stat_points:
             await ctx.send(f"Total cost of stats ({total_cost}) is greater than the maximum allowed (27).")
             return
 
+        char_race = char_race.lower()
+
         if not races.__contains__(char_race):
             await ctx.send("Invalid race.")
             return
 
-        if not classes.__contains__(char_class):
+        adv_class = adv_class.lower()
+
+        if not classes.__contains__(adv_class):
             await ctx.send("Invalid class.")
             return
 
@@ -743,34 +763,39 @@ class Game(commands.Cog):
 
         curr_user.stats_set_num = 6
 
-        curr_user.race = char_race
-
         curr_user.rolled_stats = [str_stat, dex_stat, con_stat, int_stat, wis_stat, cha_stat]
 
+        curr_user.adv_class = classes.get(adv_class)
+
         _race = races.get(char_race)
+        curr_user.race = _race
         curr_user.race_stats = [_race.get_str(), _race.get_dex(), _race.get_con(), _race.get_int(), _race.get_wis(),
                                 _race.get_cha()]
+
+        curr_user.race_speed = _race.get_speed()
+
+        curr_user.update_total_speed()
 
         curr_user.update_all_total_stat()
         curr_user.update_stats_modifiers()
 
-        if curr_user.char_class == "fighter" or curr_user.char_class == "cleric":
+        if curr_user.adv_class == AdvClass.FIGHTER or curr_user.adv_class == AdvClass.CLERIC:
             curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
         else:
             curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
 
-        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(char_class)))
+        curr_user.hit_points = curr_user.adv_class.get_hit_dice().throw() + curr_user.stats_modifiers[2]
+
+        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(adv_class).get_role_id()))
         await curr_user.member.add_roles(ctx.guild.get_role(_race.get_role_id()))
         await curr_user.member.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
 
     @commands.command(help="# Send DM request to buy an item")
     @commands.has_role("Adventurer")
-    async def request_buy(self, ctx, item: str):
-        if Transactions.contains(ctx.author.display_name, item):
+    async def request_buy(self, ctx, item: str, amount: int = 1):
+        if Transactions.contains(ctx.author.display_name, item, TransactionType.BUY):
             await ctx.send("Transaction already exists")
             return
-
-        Transactions.add(ctx.author.display_name, item)
 
         curr_user = get_user(ctx.author)
 
@@ -779,17 +804,27 @@ class Game(commands.Cog):
 
         _item: Item = ItemsDataBase.get_item(item)
 
-        await ctx.guild.get_channel(costants.DM_CHAT_ID).send(f"{ctx.author.display_name} request to buy {item}.\n"
-                                                              f"{item} default price: {_item.cost}.\n"
+        if _item is None:
+            await ctx.send("Item not found")
+            return
+
+        if curr_user.curr_inventory_weight + (_item.weight * amount) > curr_user.max_inventory_weight:
+            await ctx.send("Not enough space in inventory")
+            return
+
+        Transactions.add(ctx.author.display_name, item, amount, TransactionType.BUY)
+
+        await ctx.guild.get_channel(costants.DM_CHAT_ID).send(f"{ctx.author.display_name} request to buy {amount} {item}.\n"
+                                                              f"{item} default price: {_item.cost.times(amount)}.\n"
                                                               f"{ctx.author.display_name} purse: {curr_user.purse.toString()}.\n"
                                                               f"Type !set_price <@user> <item> <price> <currency> to set the price."
                                                               f"You can also use !set_price <@user> <item> \"default\" to set the default price.\n"
-                                                              f"===============================================================================")
+                                                              f"=================================================================================================================================================")
 
-    @commands.command(help="# Send the adventurer the price of the requested item")
+    @commands.command(help="# Send the adventurer the price of the requested item to buy")
     @commands.has_role("DM")
-    async def set_price(self, ctx, member: str, item: str, price: str, currency: str = None):
-        transaction = Transactions.get(member, item)
+    async def set_buy_price(self, ctx, member: str, item: str, price: str, currency: str = None):
+        transaction = Transactions.get(member, item, TransactionType.BUY)
 
         if transaction is None:
             await ctx.send("Transaction not found")
@@ -797,7 +832,7 @@ class Game(commands.Cog):
 
         if price == "default":
             _item: Item = ItemsDataBase.get_item(item)
-            price = _item.cost.value
+            price = _item.cost.value * transaction.amount
             currency = _item.cost.coinType
 
         transaction.price = int(price)
@@ -805,12 +840,12 @@ class Game(commands.Cog):
 
         transaction.state = Transactions.TransactionState.PRICE_SET
 
-        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {item} to {price} {currency}")
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {transaction.amount} {item} to {price} {currency}")
 
     @commands.command(help="# Accept item price and buy it")
     @commands.has_role("Adventurer")
-    async def accept_trade(self, ctx, item: str):
-        transaction = Transactions.get(ctx.author.display_name, item)
+    async def accept_buy(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item, TransactionType.BUY)
 
         if transaction is None:
             await ctx.send("Transaction not found")
@@ -822,24 +857,118 @@ class Game(commands.Cog):
             return
 
         if curr_user.purse.remove(transaction.price, transaction.coin_type.value):
-            await ctx.send(f"{item} bought for {transaction.price} {transaction.coin_type}")
-            curr_user.inventory.append(item)
+            await ctx.send(f"{transaction.amount} {item} bought for {transaction.price} {transaction.coin_type}")
+
+            if item in curr_user.inventory:
+                curr_user.inventory.update({item: curr_user.inventory.get(item) + transaction.amount})
+            else:
+                curr_user.inventory.update({item: transaction.amount})
         else:
             await ctx.send("Not enough money")
 
-        Transactions.remove(ctx.author.display_name, item)
+        Transactions.remove(ctx.author.display_name, item, TransactionType.BUY)
 
     @commands.command(help="# Refuse item price and close transaction")
     @commands.has_role("Adventurer")
-    async def refuse_trade(self, ctx, item: str):
-        transaction = Transactions.get(ctx.author.display_name, item)
+    async def refuse_buy(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item, TransactionType.BUY)
 
         if transaction is None:
             await ctx.send("Transaction not found")
             return
 
-        Transactions.remove(ctx.author.display_name, item)
-        await ctx.send(f"{item} transaction closed")
+        Transactions.remove(ctx.author.display_name, item, TransactionType.BUY)
+        await ctx.send(f"{transaction.amount} {item} transaction closed")
+
+    @commands.command(help="# Send DM request to sell an item")
+    @commands.has_role("Adventurer")
+    async def request_sell(self, ctx, item: str, amount: int = 1):
+        if Transactions.contains(ctx.author.display_name, item, TransactionType.SELL):
+            await ctx.send("Transaction already exists")
+            return
+
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        _item: Item = curr_user.inventory.get(item)
+
+        if _item is None:
+            await ctx.send("Item not found")
+            return
+
+        if curr_user.inventory.get(item) < amount:
+            await ctx.send(f"Not enough items in inventory. You only have {curr_user.inventory.get(item)} {item}")
+            return
+
+        Transactions.add(ctx.author.display_name, item, amount, TransactionType.SELL)
+
+        await ctx.guild.get_channel(costants.DM_CHAT_ID).send(f"{ctx.author.display_name} request to sell {amount} {item}.\n"
+                                                              f"{item} default price: {_item.cost.times(amount)}.\n"
+                                                              f"{ctx.author.display_name} purse: {curr_user.purse.toString()}.\n"
+                                                              f"Type !set_price <@user> <item> <price> <currency> to set the price."
+                                                              f"You can also use !set_price <@user> <item> \"default\" to set the default price.\n"
+                                                              f"=================================================================================================================================================")
+
+    @commands.command(help="# Send the adventurer the price of the requested item to sell")
+    @commands.has_role("DM")
+    async def set_sell_price(self, ctx, member: str, item: str, price: str, currency: str = None):
+        transaction = Transactions.get(member, item, TransactionType.SELL)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        if price == "default":
+            _item: Item = ItemsDataBase.get_item(item)
+            price = _item.cost.value * transaction.amount
+            currency = _item.cost.coinType
+
+        transaction.price = int(price)
+        transaction.coin_type = enum_from_str(currency)
+
+        transaction.state = Transactions.TransactionState.PRICE_SET
+
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(
+            f"DM has set the price of {transaction.amount} {item} to {price} {currency}")
+
+    @commands.command(help="# Accept item price and sell it")
+    @commands.has_role("Adventurer")
+    async def accept_sell(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item, TransactionType.SELL)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        curr_user.purse.add(transaction.price, transaction.coin_type.value)
+
+        await ctx.send(f"{transaction.amount} {item} sold for {transaction.price} {transaction.coin_type}")
+
+        if curr_user.inventory.get(item) == transaction.amount:
+            curr_user.inventory.pop(item)
+        else:
+            curr_user.inventory.update({item: curr_user.inventory.get(item) - transaction.amount})
+
+        Transactions.remove(ctx.author.display_name, item, TransactionType.SELL)
+
+    @commands.command(help="# Refuse item price and close transaction")
+    @commands.has_role("Adventurer")
+    async def refuse_buy(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item, TransactionType.SELL)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        Transactions.remove(ctx.author.display_name, item, TransactionType.SELL)
+        await ctx.send(f"{transaction.amount} {item} transaction closed")
 
     @commands.command()
     @commands.has_role("DM")
@@ -855,19 +984,173 @@ class Game(commands.Cog):
 
         await ctx.send(f"{curr_user.member.display_name}'s purse: {curr_user.purse.toString()}")
 
+    @commands.command()
+    async def equip(self, ctx, item: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        # Check if item is in inventory
+        if item not in curr_user.inventory:
+            await ctx.send(f"{item} not found in inventory")
+            return
+
+        # Check if item is a weapon, armor or shield
+        # Invalid items are never added to the inventory
+        if ItemsDataBase.weapons.__contains__(item):
+            curr_user.equipped_weapon = ItemsDataBase.get_item(item)
+        elif ItemsDataBase.armors.__contains__(item):
+            curr_user.equipped_armor = ItemsDataBase.get_item(item)
+            curr_user.update_armor_class()
+            if ((curr_user.equipped_armor.str_value == ArmorStr.STR13 and curr_user.total_stats[0] < 13) or
+                    (curr_user.equipped_armor.str_value == ArmorStr.STR15 and curr_user.total_stats[0] < 15)):
+                curr_user.speed_debuff = 10
+            else:
+                curr_user.speed_debuff = 0
+            curr_user.update_total_speed()
+        else:
+            curr_user.has_shield = True
+            curr_user.update_armor_class()
+
+        await ctx.send(f"{item} equipped")
+
+    @commands.command()
+    async def ability_check(self, ctx, ability: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        # Get stat type
+        stat = StatTypeEnum.str_to_enum(ability)
+
+        # Roll a D20
+        roll = D20().throw() + curr_user.stats_modifiers[stat.value]
+
+        # Add proficiency bonus if user is proficient with the ability
+        if self.check_other_proficiencies(curr_user, ability):
+            roll += curr_user.proficiency_bonus
+
+        await ctx.send(f"{curr_user.member.display_name}'s {ability} check: {roll}")
+
+    @commands.command()
+    @commands.has_role("DM")
+    async def roll_initiatives(self, ctx):
+        user_initiatives = {}
+
+        for user in costants.curr_campaign.campaign_member_list:
+            if user.isAdventurer:
+                initiative = D20().throw() + user.stats_modifiers[StatTypeEnum.DEX.value]
+
+                user_initiatives.update({user: initiative})
+
+        queue = ""
+
+        # Create the queue of initiatives
+        for key in user_initiatives:
+            queue += f"{key.member.display_name}: {user_initiatives.get(key)}  ;  "
+
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"Initiative rolls:  {queue}")
+
+    @commands.command()
+    async def roll_attack(self, ctx, ability: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        # Roll a D20
+        roll = D20().throw()
+
+        # Check for critical hit or failure
+        if roll == 20:
+            await ctx.send(f"{curr_user.member.display_name}'s attack rolled: Critical hit!")
+            return
+        elif roll == 1:
+            await ctx.send(f"{curr_user.member.display_name}'s attack rolled: Critical failure!")
+            return
+
+        stat = StatTypeEnum.str_to_enum(ability)
+
+        if stat is None:
+            await ctx.send("Invalid ability")
+            return
+
+        # Add stat modifier
+        roll += curr_user.stats_modifiers[stat.value]
+
+        # Add proficiency bonus if user is proficient with the weapon
+        if curr_user.weapon_proficiencies.__contains__(curr_user.equipped_weapon.weaponType) or self.check_other_proficiencies(curr_user, curr_user.equipped_weapon.name):
+            roll += curr_user.proficiency_bonus
+
+        await ctx.send(f"{curr_user.member.display_name}'s attack rolled: {roll}")
+
+    @commands.command()
+    async def roll_damage(self, ctx):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        damage = curr_user.equipped_weapon.damage.throw()
+
+        await ctx.send(f"{curr_user.member.display_name}'s damage: {damage}")
+
+    @commands.command()
+    async def saving_throw(self, ctx, ability: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        stat = StatTypeEnum.str_to_enum(ability)
+
+        proficiency = 0
+
+        if curr_user.saving_throw_proficiencies.__contains__(ability.upper()):
+            proficiency = curr_user.proficiency_bonus
+
+        roll = D20().throw() + curr_user.stats_modifiers[stat.value] + proficiency
+
+        await ctx.send(f"{curr_user.member.display_name}'s {ability} saving throw: {roll}")
+
+    @staticmethod
+    def check_other_proficiencies(user: CampaignMember, proficiency: str) -> bool:
+        if user.class_proficiencies.__contains__(proficiency) or user.race_proficiencies.__contains__(proficiency):
+            return True
+        return False
+
+    @commands.command()
+    async def get_member_info(self, ctx, member: discord.Member):
+        curr_user = get_user(member)
+
+        if curr_user is None:
+            return
+
+        await ctx.send(curr_user.get_info())
+
+    @commands.command(help="# Set the current campaign's encounter."
+                           "Template: !set_encounter <monster_id_1>:<monster_name_1>, <monster_id_2>:<monster_name_2>, ... <monster_id_n>:<monster_name_n>")
+    @commands.has_role("DM")
+    async def set_encounter(self, ctx, arr: str):
+        costants.curr_campaign.encounter = Encounter(arr)
+
+        await ctx.send(costants.curr_campaign.encounter.toString())
+
+    @commands.command()
+    async def damage_monster(self, ctx, monster_id: str, damage: int):
+        monster = costants.curr_campaign.encounter.get_by_id(monster_id)
+
+        monster_state: MonsterState = monster.take_damage(damage)
+
+        if monster_state == MonsterState.DEAD:
+            for member in costants.curr_campaign.campaign_member_list:
+                if member.isAdventurer:
+                    await member.add_xp(monster.xp)
+
+        await ctx.send(f"{monster.name} took {damage} damage. Remaining hit points: {monster.hit_points}")
+
 
 async def setup(bot):
     await bot.add_cog(Game(bot))
-
-# TODO: Roll for:
-#  - ability checks: STRENGTH: ATHLETICS
-#               DEXTERITY: ACROBATICS, SLEIGHT OF HAND, STEALTH
-#               INTELLIGENCE: ARCANA, HISTORY, INVESTIGATION, NATURE, RELIGION
-#               WISDOM: ANIMAL HANDLING, INSIGHT, MEDICINE, PERCEPTION, SURVIVAL
-#               CHARISMA: DECEPTION, INTIMIDATION, PERFORMANCE, PERSUASION
-#  - initiative: D20 + DEX -> create attack queue
-#  - attack: D20 + STR/DEX + proficiency bonus
-#       - 20: Success
-#       - 1: Critical failure
-#  - damage: Weapon damage (Dice)
-#  - saving throws: D20 + STR/DEX/CON/INT/WIS/CHA + proficiency bonus

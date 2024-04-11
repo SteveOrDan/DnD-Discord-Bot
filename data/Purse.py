@@ -49,7 +49,7 @@ class Purse:
         else:
             self.purse[coinType] += amount
 
-    def remove(self, amount: int, coinType: int):
+    def remove(self, amount: int, coinType: int) -> bool:
         if self.purse[coinType] < amount:
             if coinType == 0 or not self.remove(amount // 10 + 1, coinType - 1):
                 return False
@@ -57,11 +57,11 @@ class Purse:
         self.purse[coinType] -= amount
         return True
 
-    def get(self, coinType: CoinType):
+    def get(self, coinType: CoinType) -> int:
         return self.purse[coinType.value]
 
-    def getPurse(self):
+    def getPurse(self) -> [int]:
         return self.purse
 
-    def toString(self):
+    def toString(self) -> str:
         return f'{self.purse[0]} PP, {self.purse[1]} GP, {self.purse[2]} SP, {self.purse[3]} CP'
