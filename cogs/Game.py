@@ -9,12 +9,12 @@ import random
 import data.Names as namesGenerator
 
 import costants
-from data import Transactions
+from data import Transactions, MonstersDataBase
 from data.Dice import D4, D20
 from data.Encounter import Encounter
 from data.Items import ItemsDataBase
 from data.Items.Items import Item, ArmorStr
-from data.MonstersDataBase import MonsterState
+from data.MonstersDataBase import Monster
 from data.Purse import Purse, enum_from_str
 from data.Transactions import TransactionType
 
@@ -34,6 +34,8 @@ async def send_char_embed(ctx, member: CampaignMember):
     embed.add_field(name="Intelligence", value=f"{member.total_stats[3]}", inline=True)
     embed.add_field(name="Wisdom", value=f"{member.total_stats[4]}", inline=True)
     embed.add_field(name="Charisma", value=f"{member.total_stats[5]}", inline=True)
+
+    embed.add_field(name="Speed", value=f"{member.total_speed}", inline=False)
 
     embed.add_field(name="Armor Class", value=f"{member.armor_class}", inline=False)
 
@@ -58,6 +60,8 @@ class Game(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    # TODO: Implement character current HitPoints and Armor Class
+
     @commands.command(help="# Quick 2 players set up. Testing purposes only.")
     async def qps(self, ctx, dm: discord.Member, adv: discord.Member, adv_class: str, char_race: str,
                   str_stat: int, dex_stat: int, con_stat: int, int_stat: int, wis_stat: int, cha_stat: int):
@@ -72,6 +76,13 @@ class Game(commands.Cog):
 
         await adv.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
         await self.add_member_to_campaign(member=adv)
+
+        # Get members and set dm or adv var
+        dm_camp_member = get_user(dm)
+        adv_camp_member = get_user(adv)
+
+        dm_camp_member.isDM = True
+        adv_camp_member.isAdventurer = True
 
         # Assign DM role
         await dm.add_roles(guild.get_role(costants.DM_ROLE_ID))
@@ -832,15 +843,15 @@ class Game(commands.Cog):
 
         if price == "default":
             _item: Item = ItemsDataBase.get_item(item)
-            price = _item.cost.value * transaction.amount
-            currency = _item.cost.coinType
-
-        transaction.price = int(price)
-        transaction.coin_type = enum_from_str(currency)
+            transaction.price = _item.cost.value * transaction.amount
+            transaction.coin_type = _item.cost.coinType
+        else:
+            transaction.price = int(price)
+            transaction.coin_type = enum_from_str(currency)
 
         transaction.state = Transactions.TransactionState.PRICE_SET
 
-        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {transaction.amount} {item} to {price} {currency}")
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {transaction.amount} {item} to {transaction.price} {transaction.coin_type}")
 
     @commands.command(help="# Accept item price and buy it")
     @commands.has_role("Adventurer")
@@ -960,7 +971,7 @@ class Game(commands.Cog):
 
     @commands.command(help="# Refuse item price and close transaction")
     @commands.has_role("Adventurer")
-    async def refuse_buy(self, ctx, item: str):
+    async def refuse_sell(self, ctx, item: str):
         transaction = Transactions.get(ctx.author.display_name, item, TransactionType.SELL)
 
         if transaction is None:
@@ -1130,26 +1141,111 @@ class Game(commands.Cog):
 
         await ctx.send(curr_user.get_info())
 
+    @commands.command()
+    @commands.has_role("DM")
+    async def create_monster(self, ctx, name: str, AC: int, HP: int, attack_bonus: int, dice_num: int, damage_dice: int, damage_bonus: int):
+        if MonstersDataBase.monsters.__contains__(name):
+            await ctx.send(f"Monster {name} already exists in the database.")
+            return
+
+        monster: Monster = Monster(name, AC, HP, attack_bonus, dice_num, damage_dice, damage_bonus)
+
+        MonstersDataBase.monsters.update({name: monster})
+
+        if MonstersDataBase.monsters.__contains__(name):
+            await ctx.send(f"Monster {name} created and added to the database.\n"
+                           f"You can now access the monster by typing !get_monster <monster_name>")
+        else:
+            await ctx.send("Monster creation failed")
+
     @commands.command(help="# Set the current campaign's encounter."
-                           "Template: !set_encounter <monster_id_1>:<monster_name_1>, <monster_id_2>:<monster_name_2>, ... <monster_id_n>:<monster_name_n>")
+                           "Template: !set_encounter <monster_name_1>:<count>, <monster_name_2>:<count>, ...")
     @commands.has_role("DM")
     async def set_encounter(self, ctx, arr: str):
-        costants.curr_campaign.encounter = Encounter(arr)
+        # Encounter constructor automatically sets the monsters' dictionary
+        costants.curr_campaign.curr_encounter = Encounter(arr)
 
-        await ctx.send(costants.curr_campaign.encounter.toString())
+        await ctx.send(costants.curr_campaign.curr_encounter.toString())
+
+        # TODO: Roll for initiative (monsters and players) Creates a queue (can pass the turn and not controlling if it's the player's turn)
+        #  just prints "It's player's x turn"
+
+    @commands.command(help="# Attack a monster in the current encounter. Template: !attack_monster <ability> <monster_id>")
+    async def attack_monster(self, ctx, ability: str, monster_id: str):
+        curr_user = get_user(ctx.author)
+
+        monster = costants.curr_campaign.curr_encounter.get_by_id(monster_id)
+
+        if curr_user is None or monster is None:
+            await ctx.send("User or monster not found")
+            return
+
+        # Roll a D20
+        roll = D20().throw()
+
+        # Check for critical hit or failure
+        if roll == 1:
+            await ctx.send(f"{curr_user.member.display_name}'s attack rolled: Critical failure!")
+        else:
+            doesHit: bool
+            if roll == 20:
+                await ctx.send(f"{curr_user.member.display_name}'s attack rolled: Critical hit!")
+                doesHit = True
+            else:
+                stat = StatTypeEnum.str_to_enum(ability)
+
+                if stat is None:
+                    await ctx.send("Invalid ability")
+                    return
+
+                # Add stat modifier
+                roll += curr_user.stats_modifiers[stat.value]
+
+                # Add proficiency bonus if user is proficient with the weapon
+                if (curr_user.weapon_proficiencies.__contains__(curr_user.equipped_weapon.weaponType) or
+                        self.check_other_proficiencies(curr_user, curr_user.equipped_weapon.name)):
+                    roll += curr_user.proficiency_bonus
+
+                doesHit = roll >= monster.AC
+
+            if doesHit:
+                damage = curr_user.equipped_weapon.damage.throw_n(curr_user.equipped_weapon.dice_num)
+
+                monsterHP = monster.take_damage(damage)
+
+                if monsterHP <= 0:
+                    costants.curr_campaign.curr_encounter.remove(monster_id)
+                    await ctx.send(f"{monster.name} has been defeated.")
+
+                    if costants.curr_campaign.curr_encounter.isEmpty():
+                        await ctx.send("The encounter has been cleared.")
+                else:
+                    await ctx.send(f"{monster.name} took {damage} damage. Remaining hit points: {monsterHP}")
+            else:
+                await ctx.send(f"{curr_user.member.display_name}'s attack missed")
 
     @commands.command()
-    async def damage_monster(self, ctx, monster_id: str, damage: int):
-        monster = costants.curr_campaign.encounter.get_by_id(monster_id)
+    @commands.has_role("DM")
+    async def attack_player(self, ctx, member: discord.Member, attacking_monster: str):
+        curr_user = get_user(member)
 
-        monster_state: MonsterState = monster.take_damage(damage)
+        monster = MonstersDataBase.get_monster(attacking_monster)
 
-        if monster_state == MonsterState.DEAD:
-            for member in costants.curr_campaign.campaign_member_list:
-                if member.isAdventurer:
-                    await member.add_xp(monster.xp)
+        if curr_user is None or monster is None:
+            await ctx.send("User or monster not found")
+            return
 
-        await ctx.send(f"{monster.name} took {damage} damage. Remaining hit points: {monster.hit_points}")
+        damage = monster.attack(curr_user.armor_class)
+        curr_user.currHitPoints -= damage
+
+        if curr_user.currHitPoints <= 0:
+            await ctx.send(f"{curr_user.member.display_name} has been defeated.")
+        else:
+            await ctx.send(f"{curr_user.member.display_name} took {damage} damage. Remaining hit points: {curr_user.currHitPoints}")
+
+    @commands.command()
+    async def get_all_monsters(self, ctx):
+        await ctx.send(MonstersDataBase.get_all_monsters())
 
 
 async def setup(bot):

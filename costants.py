@@ -1,5 +1,3 @@
-import Campaign
-
 GENERAL_CHAT_ID = 1210219845006917656
 
 GUILD_ID = 1210219845006917653  # ID of the server
@@ -102,6 +100,6 @@ ALIGNMENT_ROLES_ID = [LAWFUL_GOOD_ROLE_ID,
                       NEUTRAL_EVIL_ROLE_ID,
                       CHAOTIC_EVIL_ROLE_ID]
 
-curr_campaign: Campaign = None
+curr_campaign = None
 
 BOT_TOKEN = "MTIxMDIxMzc1NTYxMTM5MDAyMw.GZaLli.xzy7K120fBgl1GIhZdxvEdRPj4AlzaUdEIDeB4"

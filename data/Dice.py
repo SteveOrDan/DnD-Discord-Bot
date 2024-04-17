@@ -40,3 +40,22 @@ class D20(Dice):
 
 class D100(Dice):
     faces = 100
+
+
+def dice_from_int(n: int):
+    if n == 4:
+        return D4()
+    elif n == 6:
+        return D6()
+    elif n == 8:
+        return D8()
+    elif n == 10:
+        return D10()
+    elif n == 12:
+        return D12()
+    elif n == 20:
+        return D20()
+    elif n == 100:
+        return D100()
+    else:
+        return None

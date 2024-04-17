@@ -176,7 +176,8 @@ class CampaignMember:
     race_speed: int = 0
     speed_debuff: int = 0
 
-    hitPoints: int = 0
+    maxHitPoints: int = 0
+    currHitPoints: int = 0
 
     weapon_proficiencies: [WeaponType] = []
     armor_proficiencies: [ArmorType] = []
@@ -289,7 +290,7 @@ class CampaignMember:
 
             res += f"Level: {self.level}\n"
 
-            res += f"Hit points: {self.hitPoints}\n"
+            res += f"Hit points: {self.maxHitPoints}\n"
 
             res += "Weapon proficiencies: "
             for weapon_prof in self.weapon_proficiencies:
@@ -379,7 +380,7 @@ class CampaignMember:
     def level_up(self):
         self.level += 1
 
-        self.hitPoints += max(1, self.adv_class.get_hit_dice().throw() + self.stats_modifiers[2])
+        self.maxHitPoints += max(1, self.adv_class.get_hit_dice().throw() + self.stats_modifiers[2])
 
         self.proficiency_bonus = (self.level - 1) // 4 + 2
 

@@ -71,7 +71,7 @@ def transaction_list_to_str() -> str:
         else:
             result += f"Adventurer: {transaction.member}  ; {transaction.transaction_type} {transaction.amount} item(s): {transaction.item}  ;  Price: {transaction.price} {transaction.coin_type}\n"
 
-    if result is "":
+    if result == "":
         return "No transactions yet."
     else:
         return result

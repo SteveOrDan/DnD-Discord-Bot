@@ -83,7 +83,7 @@ human_names = {
 
 
 def rand(race, gender, clan=None) -> str:
-    if clan is not None and race is "human":
+    if clan is not None and race == "human":
         if human_names.__contains__(clan):
             if human_names.get(clan).__contains__(gender):
                 return human_names.get(clan).get(gender)[random.randint(0, len(human_names.get(clan).get(gender)) - 1)]
