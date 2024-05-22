@@ -43,7 +43,7 @@ class Purse:
             self.purse = new_purse
 
     def add(self, amount: int, coinType: int):
-        if coinType != 0 and self.purse[coinType] + amount >= 10:
+        if 0 < coinType <= 3 and self.purse[coinType] + amount >= 10:
             self.add(coinType - 1, math.floor((amount + self.purse[coinType])/10))
             self.purse[coinType] = (self.purse[coinType] + amount) % 10
         else:

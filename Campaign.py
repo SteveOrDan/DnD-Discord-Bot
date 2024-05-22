@@ -11,7 +11,6 @@ class CampaignState(enum.Enum):
 
 
 class Campaign:
-    # Campaign state for delete command
     campaign_state = CampaignState.NONE
 
     player_confirm_delete = []

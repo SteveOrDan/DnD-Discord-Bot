@@ -11,62 +11,62 @@ class RaceTraits(commands.Cog):
     @commands.command()
     @commands.has_role("Campaign")
     async def dwarf(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_dwarf)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_dwarf)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def mountain_dwarf(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_mountain_dwarf)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_mountain_dwarf)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def hill_dwarf(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_hill_dwarf)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_hill_dwarf)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def elf(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_elf)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_elf)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def high_elf(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_high_elf)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_high_elf)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def wood_elf(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_wood_elf)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_wood_elf)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def halfling(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_halfling)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_halfling)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def stout(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_stout)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_stout)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def light_foot(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_lightfoot)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_lightfoot)
 
     @commands.command()
     @commands.has_role("Campaign")
     async def human(self, ctx):
-        if ctx.channel.id == costants.curr_campaign.RACE_INFO_TEXT_CH.id:
-            await costants.curr_campaign.RACE_INFO_TEXT_CH.send(embed=embed_human)
+        if ctx.channel.id == costants.RACE_INFO_CHAT_ID:
+            await ctx.send(embed=embed_human)
 
 
 async def setup(bot):

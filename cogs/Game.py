@@ -1,15 +1,14 @@
-import discord
 from discord.ext import commands
 import CampaignRoleView
 from Campaign import Campaign, CampaignState
 from ClassView import ClassView
-from RaceView import RaceView, RaceTypeEnum
-from CampaignMember import CampaignMember, StatTypeEnum, AdvClass
+from RaceView import RaceView
+from CampaignMember import *
 import random
 import data.Names as namesGenerator
 
 import costants
-from data import Transactions, MonstersDataBase
+from data import Transactions, MonstersDataBase, SpellDataBase
 from data.Dice import D4, D20
 from data.Encounter import Encounter
 from data.Items import ItemsDataBase
@@ -39,6 +38,8 @@ async def send_char_embed(ctx, member: CampaignMember):
 
     embed.add_field(name="Armor Class", value=f"{member.armor_class}", inline=False)
 
+    embed.add_field(name="Hit Points", value=f"{member.maxHitPoints}", inline=False)
+
     embed.add_field(name="Alignment", value=f"{member.alignment}", inline=False)
 
     embed.add_field(name="Bonds", value=f"{member.bonds}", inline=False)
@@ -57,134 +58,15 @@ async def send_char_embed(ctx, member: CampaignMember):
 
 
 class Game(commands.Cog):
+
+    CAMPAIGN_ROLE: discord.Role = None
+    CHOOSING_ROLE: discord.Role = None
+    ADVENTURER_ROLE: discord.Role = None
+    DM_ROLE: discord.Role = None
+    BUILDING_CHARACTER_ROLE: discord.Role = None
+
     def __init__(self, bot):
         self.bot = bot
-
-    # TODO: Implement character current HitPoints and Armor Class
-
-    @commands.command(help="# Quick 2 players set up. Testing purposes only.")
-    async def qps(self, ctx, dm: discord.Member, adv: discord.Member, adv_class: str, char_race: str,
-                  str_stat: int, dex_stat: int, con_stat: int, int_stat: int, wis_stat: int, cha_stat: int):
-        guild = ctx.guild
-
-        # Set campaign object
-        costants.curr_campaign = Campaign(user_num=2, guild_id=guild.id)
-
-        # Assign campaign and user roles
-        await dm.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
-        await self.add_member_to_campaign(member=dm)
-
-        await adv.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
-        await self.add_member_to_campaign(member=adv)
-
-        # Get members and set dm or adv var
-        dm_camp_member = get_user(dm)
-        adv_camp_member = get_user(adv)
-
-        dm_camp_member.isDM = True
-        adv_camp_member.isAdventurer = True
-
-        # Assign DM role
-        await dm.add_roles(guild.get_role(costants.DM_ROLE_ID))
-
-        # Assign Adventurers role
-        await adv.add_roles(guild.get_role(costants.ADVENTURER_ROLE_ID))
-
-        # Quick character creation
-        max_stat_points = 27
-
-        scores_costs = {
-            8: 0,
-            9: 1,
-            10: 2,
-            11: 3,
-            12: 4,
-            13: 5,
-            14: 7,
-            15: 9
-        }
-
-        races = {
-            "dwarf": RaceTypeEnum.DWARF,
-            "mountain dwarf": RaceTypeEnum.MOUNTAIN_DWARF,
-            "hill dwarf": RaceTypeEnum.HILL_DWARF,
-            "elf": RaceTypeEnum.ELF,
-            "high elf": RaceTypeEnum.HIGH_ELF,
-            "wood elf": RaceTypeEnum.WOOD_ELF,
-            "halfling": RaceTypeEnum.HALFLING,
-            "lightfoot": RaceTypeEnum.LIGHTFOOT,
-            "stout": RaceTypeEnum.STOUT,
-            "human": RaceTypeEnum.HUMAN
-        }
-
-        classes = {
-            "cleric": AdvClass.CLERIC,
-            "fighter": AdvClass.FIGHTER,
-            "rogue": AdvClass.ROGUE,
-            "wizard": AdvClass.WIZARD
-        }
-
-        char_race = char_race.lower()
-        adv_class = adv_class.lower()
-
-        total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + scores_costs[wis_stat] + scores_costs[cha_stat]
-
-        if total_cost > max_stat_points:
-            await ctx.send(f"Total cost of stats ({total_cost}) is greater than the maximum allowed (27).")
-            return
-
-        if not races.__contains__(char_race):
-            await ctx.send("Invalid race.")
-            return
-
-        if not classes.__contains__(adv_class):
-            await ctx.send("Invalid class.")
-            return
-
-        curr_user = get_user(adv)
-
-        if curr_user is None:
-            await ctx.send("No user found")
-            return
-
-        curr_user.stats_set_num = 6
-
-        _race = races.get(char_race)
-        curr_user.race = _race
-
-        curr_user.adv_class = classes.get(adv_class)
-
-        curr_user.rolled_stats = [str_stat, dex_stat, con_stat, int_stat, wis_stat, cha_stat]
-
-        curr_user.race_stats = [_race.get_str(), _race.get_dex(), _race.get_con(), _race.get_int(), _race.get_wis(),
-                                _race.get_cha()]
-
-        curr_user.race_speed = _race.get_speed()
-
-        curr_user.update_total_speed()
-
-        curr_user.update_all_total_stat()
-        curr_user.update_stats_modifiers()
-
-        if curr_user.adv_class == "fighter" or curr_user.adv_class == "cleric":
-            curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
-        else:
-            curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
-
-        await curr_user.member.add_roles(ctx.guild.get_role(classes.get(adv_class).get_role_id()))
-        await curr_user.member.add_roles(ctx.guild.get_role(_race.get_role_id()))
-
-        curr_user.alignment = "N"
-        await curr_user.member.add_roles(ctx.guild.get_role(costants.NEUTRAL_ROLE_ID))
-        curr_user.background = "Background"
-        curr_user.traits = "Traits"
-        curr_user.ideals = "Ideals"
-        curr_user.bonds = "Bonds"
-        curr_user.flaws = "Flaws"
-
-        curr_user.hit_points = curr_user.adv_class.get_hit_dice().throw() + curr_user.stats_modifiers[2]
-
-        await send_char_embed(ctx, curr_user)
 
     # Create campaign
     @commands.command(help="# Create campaign (at least 3 members)")
@@ -199,11 +81,15 @@ class Game(commands.Cog):
             # Set campaign object
             costants.curr_campaign = Campaign(user_num=len(arr), guild_id=guild.id)
 
+            self.CAMPAIGN_ROLE = guild.get_role(costants.CAMPAIGN_ROLE_ID)
+            self.CHOOSING_ROLE = guild.get_role(costants.CHOOSING_ROLE_ROLE_ID)
+
             # Assign campaign and user roles
             for user in arr:
-                await user.add_roles(guild.get_role(costants.CAMPAIGN_ROLE_ID))
-                await user.add_roles(guild.get_role(costants.CHOOSING_ROLE_ROLE_ID))
-                await self.add_member_to_campaign(member=user)
+                await asyncio.sleep(1)
+                await user.add_roles(self.CAMPAIGN_ROLE)
+                await user.add_roles(self.CHOOSING_ROLE)
+                self.add_member_to_campaign(member=user)
 
             set_roles_ch = guild.get_channel(costants.SET_ROLES_CHAT_ID)
 
@@ -220,7 +106,7 @@ class Game(commands.Cog):
 
     @staticmethod
     # Creates CampaignMember object and adds it to the campaign's list of users and give him a special user role (saved attributes: member, member_Role)
-    async def add_member_to_campaign(member: discord.Member):
+    def add_member_to_campaign(member: discord.Member):
         new_user = CampaignMember()
 
         new_user.member = member
@@ -228,7 +114,6 @@ class Game(commands.Cog):
         costants.curr_campaign.campaign_member_list.append(new_user)
 
     @commands.command(help="# Start campaign")
-    # @commands.has_role("choosing role")
     async def sc(self, ctx):
         if costants.curr_campaign is not None and costants.curr_campaign.check_if_can_start_campaign():
             await ctx.send("Preparing character creation...\n")
@@ -237,29 +122,37 @@ class Game(commands.Cog):
 
             guild = ctx.guild
 
+            self.DM_ROLE = guild.get_role(costants.DM_ROLE_ID)
+            self.ADVENTURER_ROLE = guild.get_role(costants.ADVENTURER_ROLE_ID)
+            self.BUILDING_CHARACTER_ROLE = guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID)
+
             for campaignMember in costants.curr_campaign.campaign_member_list:
-                await campaignMember.member.remove_roles(guild.get_role(costants.CHOOSING_ROLE_ROLE_ID))
+                await campaignMember.member.remove_roles(self.CHOOSING_ROLE)
                 if campaignMember.isAdventurer:
-                    await campaignMember.member.add_roles(guild.get_role(costants.ADVENTURER_ROLE_ID))
-                    await campaignMember.member.add_roles(guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
+                    await campaignMember.member.add_roles(self.ADVENTURER_ROLE)
+                    await campaignMember.member.add_roles(self.BUILDING_CHARACTER_ROLE)
                 elif campaignMember.isDM:
-                    await campaignMember.member.add_roles(guild.get_role(costants.DM_ROLE_ID))
+                    await campaignMember.member.add_roles(self.DM_ROLE)
                 else:
                     await ctx.channel.send(f"Error: User {campaignMember.member} is neither Adventurer nor DM.")
 
+            await asyncio.sleep(1)
             # Fill race-info channel
             await guild.get_channel(costants.RACE_INFO_CHAT_ID).send(
                 "There are 4 core races available. Some of them also have subraces.\n"
                 "Type !<race_name> or !<subrace_name> to get more info about them.\n"
                 "Type !info to get access to the rulebook.")
 
+            await asyncio.sleep(1)
             # Fill class-info channel
             await guild.get_channel(costants.CLASS_INFO_CHAT_ID).send(
                 "There are 4 classes available. Type !<class_name> to get the handbook references to that class")
 
-            race_view = RaceView(ctx.guild)
+            await asyncio.sleep(1)
+            race_view = RaceView()
             await guild.get_channel(costants.SET_RACE_CHAT_ID).send("Choose your race", view=race_view)
 
+            await asyncio.sleep(1)
             class_view = ClassView(ctx.guild)
             await guild.get_channel(costants.SET_CLASS_CHAT_ID).send("Choose your class", view=class_view)
 
@@ -267,6 +160,7 @@ class Game(commands.Cog):
             i = 0
             for user in costants.curr_campaign.campaign_member_list:
                 if user.isAdventurer:
+                    await asyncio.sleep(1)
                     await user.member.add_roles(ctx.guild.get_role(costants.PLAYER_ROLES_ID[i]))
                     user.player_num = i + 1
                     user.STR_ch = ctx.guild.get_channel(costants.PLAYERS_STR_STAT_CH_ID[i])
@@ -306,6 +200,7 @@ class Game(commands.Cog):
         if ctx.channel.name == "roll-stats":
             stats = []
             for i in range(6):
+                await asyncio.sleep(0.5)
                 stats.append(self.roll_stat())
                 await ctx.send(f"Roll {i}: {stats[i]}")
 
@@ -347,13 +242,13 @@ class Game(commands.Cog):
             if curr_user is None:
                 await ctx.send("No user found")
                 return
-            await ctx.send("User found")
 
             curr_user.roll_list.clear()
 
             curr_user.roll_list = [15, 14, 13, 12, 10, 8]
 
             for i in range(6):
+                await asyncio.sleep(0.5)
                 await ctx.send(f"Stat {i}: {curr_user.roll_list[i]}")
 
             curr_user.stats_set_num = 0
@@ -390,6 +285,7 @@ class Game(commands.Cog):
                 for statEnum in StatTypeEnum:
                     if stat.__eq__(statEnum.fullname):
                         if not curr_user.stats_set_bools[statEnum.value]:
+                            await asyncio.sleep(1)
                             foundStat = True
                             curr_user.rolled_stats[statEnum.value] = curr_user.roll_list[curr_user.stats_set_num]
                             curr_user.update_total_stat(statEnum.value)
@@ -460,7 +356,7 @@ class Game(commands.Cog):
     @commands.command(help="# Sets up a vote for deleting the campaign")
     async def dc(self, ctx):
         if costants.curr_campaign is not None and ctx.author.id not in costants.curr_campaign.player_confirm_delete:
-            general_ch = costants.curr_campaign.CAMPAIGN_GENERAL_TEXT_CH
+            general_ch = ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID)
 
             costants.curr_campaign.player_confirm_delete.append(ctx.author.id)
 
@@ -484,30 +380,39 @@ class Game(commands.Cog):
         for ch_id in costants.CAMPAIGN_CHANNELS:
             await guild.get_channel(ch_id).purge()
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_ROLL_STATS_CH_ID:
             await guild.get_channel(ch_id).purge()
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_STR_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="STR = 0")
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_DEX_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="DEX = 0")
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_CON_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="CON = 0")
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_INT_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="INT = 0")
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_WIS_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="WIS = 0")
 
+        await asyncio.sleep(1)
         for ch_id in costants.PLAYERS_CHA_STAT_CH_ID:
             await guild.get_channel(ch_id).edit(name="CHA = 0")
 
+        await asyncio.sleep(1)
         for campaign_member in costants.curr_campaign.campaign_member_list:
             for role in campaign_member.member.roles:
                 if role.id not in costants.DEFAULT_ROLES:
+                    await asyncio.sleep(0.2)
                     await campaign_member.member.remove_roles(role)
 
         costants.curr_campaign = None
@@ -634,23 +539,15 @@ class Game(commands.Cog):
             await ctx.message.delete()
 
     @commands.command()
-    async def get_bg(self, ctx, targetMember: discord.Member = -1):
+    async def get_bg(self, ctx):
         if ctx.channel.name == costants.CHARACTER_FEATURES_CH_NAME:
-            curr_user = None
-
-            if targetMember == -1:
-                for member in costants.curr_campaign.campaign_member_list:
-                    if member.member.id == ctx.author.id:
-                        curr_user = member
-            else:
-                for member in costants.curr_campaign.campaign_member_list:
-                    if member.member.id == targetMember.id:
-                        curr_user = member
+            curr_user = get_user(ctx.author)
 
             if curr_user is None:
+                ctx.send("No user found")
                 return
 
-            await ctx.channel.send(curr_user.background)
+            await ctx.send(curr_user.background)
 
     @commands.command()
     async def random_name(self, ctx, race: str, gender: str, clan: str = None):
@@ -659,23 +556,16 @@ class Game(commands.Cog):
     @commands.command()
     @commands.has_role("Adventurer")
     async def complete_char(self, ctx):
-        curr_user = None
-        for member in costants.curr_campaign.campaign_member_list:
-            if member.member.id == ctx.message.author.id:
-                curr_user = member
+        curr_user = get_user(ctx.author)
 
         if curr_user is None:
-            return
-
-        if curr_user.race is None:
-            await ctx.send("You must choose a race first.")
             return
 
         if curr_user.adv_class is None:
             await ctx.send("You must choose a class first.")
             return
 
-        if curr_user.alignment is None:
+        if curr_user.alignment == "None":
             await ctx.send("You must choose an alignment first.")
             return
 
@@ -683,17 +573,16 @@ class Game(commands.Cog):
             await ctx.send("You must set all stats first.")
             return
 
-        await curr_user.member.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
+        if curr_user.race is None:
+            await ctx.send("You must choose a race first.")
+            return
 
-        player_roles = {
-            1: costants.P1_ROLE_ID,
-            2: costants.P2_ROLE_ID,
-            3: costants.P3_ROLE_ID,
-            4: costants.P4_ROLE_ID,
-            5: costants.P5_ROLE_ID
-        }
+        await curr_user.member.remove_roles(self.BUILDING_CHARACTER_ROLE)
 
-        curr_user.member.remove_roles(ctx.guild.get_role(player_roles.get(curr_user.player_num)))
+        curr_user.confirm_race()
+
+        await curr_user.member.add_roles(ctx.guild.get_role(curr_user.race.get_role_id()))
+        await curr_user.member.add_roles(ctx.guild.get_role(curr_user.adv_class.get_role_id()))
 
         curr_user.race_speed = curr_user.race.get_speed()
 
@@ -702,12 +591,16 @@ class Game(commands.Cog):
         curr_user.update_all_total_stat()
         curr_user.update_stats_modifiers()
 
+        curr_user.confirm_class()
+
         if curr_user.adv_class == AdvClass.FIGHTER or curr_user.adv_class == AdvClass.CLERIC:
             curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
         else:
             curr_user.purse = Purse([0, D4().throw_n(4) * 10, 0, 0])
 
         curr_user.hit_points = curr_user.adv_class.get_hit_dice().throw() + curr_user.stats_modifiers[2]
+        curr_user.update_armor_class()
+        curr_user.update_max_hit_points()
 
         await send_char_embed(ctx, curr_user)
 
@@ -715,7 +608,8 @@ class Game(commands.Cog):
                            "Template: !quick_char_create <class> <race> STR DEX CON INT WIS CHA")
     @commands.has_role("Adventurer")
     async def quick_char_create(self, ctx, adv_class: str, char_race: str, str_stat: int, dex_stat: int, con_stat: int,
-                                int_stat: int, wis_stat: int, cha_stat: int):
+                                int_stat: int, wis_stat: int, cha_stat: int, alignment: str = "N"):
+        await ctx.send("Creating character. Please wait a moment...")
         max_stat_points = 27
 
         scores_costs = {
@@ -749,6 +643,8 @@ class Game(commands.Cog):
             "wizard": AdvClass.WIZARD
         }
 
+        alignments = ["LG", "NG", "CG", "LN", "N", "CN", "LE", "NE", "CE"]
+
         total_cost = scores_costs[str_stat] + scores_costs[dex_stat] + scores_costs[con_stat] + scores_costs[int_stat] + scores_costs[wis_stat] + scores_costs[cha_stat]
 
         if total_cost > max_stat_points:
@@ -767,10 +663,17 @@ class Game(commands.Cog):
             await ctx.send("Invalid class.")
             return
 
-        curr_user = None
-        for member in costants.curr_campaign.campaign_member_list:
-            if member.member.id == ctx.author.id:
-                curr_user = member
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            await ctx.send("No user found")
+            return
+
+        if not alignments.__contains__(alignment):
+            await ctx.send("Invalid alignment.")
+            return
+
+        curr_user.alignment = alignment
 
         curr_user.stats_set_num = 6
 
@@ -790,6 +693,8 @@ class Game(commands.Cog):
         curr_user.update_all_total_stat()
         curr_user.update_stats_modifiers()
 
+        await curr_user.update_all_stat_ch()
+
         if curr_user.adv_class == AdvClass.FIGHTER or curr_user.adv_class == AdvClass.CLERIC:
             curr_user.purse = Purse([0, D4().throw_n(5) * 10, 0, 0])
         else:
@@ -799,7 +704,16 @@ class Game(commands.Cog):
 
         await curr_user.member.add_roles(ctx.guild.get_role(classes.get(adv_class).get_role_id()))
         await curr_user.member.add_roles(ctx.guild.get_role(_race.get_role_id()))
-        await curr_user.member.remove_roles(ctx.guild.get_role(costants.BUILDING_CHARACTER_ROLE_ID))
+        await curr_user.member.remove_roles(self.BUILDING_CHARACTER_ROLE)
+
+        await ctx.send("Character created. You can add more info about your character using the following commands:\n"
+                       "- !set_name <name>\n"
+                       "- !set_bg <background>\n"
+                       "- !set_traits <traits>\n"
+                       "- !set_ideals <ideals>\n"
+                       "- !set_bonds <bonds>\n"
+                       "- !set_flaws <flaws>")
+        await ctx.send("You can also use !complete_char to finish the character creation.")
 
     @commands.command(help="# Send DM request to buy an item")
     @commands.has_role("Adventurer")
@@ -828,8 +742,8 @@ class Game(commands.Cog):
         await ctx.guild.get_channel(costants.DM_CHAT_ID).send(f"{ctx.author.display_name} request to buy {amount} {item}.\n"
                                                               f"{item} default price: {_item.cost.times(amount)}.\n"
                                                               f"{ctx.author.display_name} purse: {curr_user.purse.toString()}.\n"
-                                                              f"Type !set_price <@user> <item> <price> <currency> to set the price."
-                                                              f"You can also use !set_price <@user> <item> \"default\" to set the default price.\n"
+                                                              f"Type !set_buy_price <@user> <item> <price> <currency> to set the price."
+                                                              f"You can also use !set_buy_price <@user> <item> \"default\" to set the default price.\n"
                                                               f"=================================================================================================================================================")
 
     @commands.command(help="# Send the adventurer the price of the requested item to buy")
@@ -851,7 +765,31 @@ class Game(commands.Cog):
 
         transaction.state = Transactions.TransactionState.PRICE_SET
 
-        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {transaction.amount} {item} to {transaction.price} {transaction.coin_type}")
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(f"DM has set the price of {transaction.amount} {item} to {transaction.price} {transaction.coin_type}.\n"
+                                                                    f"Type !accept_buy <item> to accept the trade or !refuse_buy <item> to refuse it.")
+
+    @commands.command(help="# Send the adventurer the price of the requested item to sell")
+    @commands.has_role("DM")
+    async def set_sell_price(self, ctx, member: str, item: str, price: str, currency: str = None):
+        transaction = Transactions.get(member, item, TransactionType.SELL)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        if price == "default":
+            _item: Item = ItemsDataBase.get_item(item)
+            transaction.price = _item.cost.value * transaction.amount
+            transaction.coin_type = _item.cost.coinType
+        else:
+            transaction.price = int(price)
+            transaction.coin_type = enum_from_str(currency)
+
+        transaction.state = Transactions.TransactionState.PRICE_SET
+
+        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(
+            f"DM has set the price of {transaction.amount} {item} to {transaction.price} {transaction.coin_type}.\n"
+            f"Type !accept_sell <item> to accept the trade or !refuse_sell <item> to refuse it.")
 
     @commands.command(help="# Accept item price and buy it")
     @commands.has_role("Adventurer")
@@ -870,14 +808,33 @@ class Game(commands.Cog):
         if curr_user.purse.remove(transaction.price, transaction.coin_type.value):
             await ctx.send(f"{transaction.amount} {item} bought for {transaction.price} {transaction.coin_type}")
 
-            if item in curr_user.inventory:
-                curr_user.inventory.update({item: curr_user.inventory.get(item) + transaction.amount})
-            else:
-                curr_user.inventory.update({item: transaction.amount})
+            curr_user.add_item_to_inv(item, transaction.amount)
         else:
             await ctx.send("Not enough money")
 
         Transactions.remove(ctx.author.display_name, item, TransactionType.BUY)
+
+    @commands.command(help="# Accept item price and sell it")
+    @commands.has_role("Adventurer")
+    async def accept_sell(self, ctx, item: str):
+        transaction = Transactions.get(ctx.author.display_name, item, TransactionType.SELL)
+
+        if transaction is None:
+            await ctx.send("Transaction not found")
+            return
+
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        curr_user.purse.add(transaction.price, transaction.coin_type.value)
+
+        await ctx.send(f"{transaction.amount} {item} sold for {transaction.price} {transaction.coin_type}")
+
+        curr_user.remove_item_from_inv(item, transaction.amount)
+
+        Transactions.remove(ctx.author.display_name, item, TransactionType.SELL)
 
     @commands.command(help="# Refuse item price and close transaction")
     @commands.has_role("Adventurer")
@@ -903,7 +860,11 @@ class Game(commands.Cog):
         if curr_user is None:
             return
 
-        _item: Item = curr_user.inventory.get(item)
+        if item not in curr_user.inventory:
+            await ctx.send(f"{item} not found in inventory")
+            return
+
+        _item: Item = ItemsDataBase.get_item(item)
 
         if _item is None:
             await ctx.send("Item not found")
@@ -918,56 +879,13 @@ class Game(commands.Cog):
         await ctx.guild.get_channel(costants.DM_CHAT_ID).send(f"{ctx.author.display_name} request to sell {amount} {item}.\n"
                                                               f"{item} default price: {_item.cost.times(amount)}.\n"
                                                               f"{ctx.author.display_name} purse: {curr_user.purse.toString()}.\n"
-                                                              f"Type !set_price <@user> <item> <price> <currency> to set the price."
-                                                              f"You can also use !set_price <@user> <item> \"default\" to set the default price.\n"
+                                                              f"Type !set_sell_price <@user> <item> <price> <currency> to set the price."
+                                                              f"You can also use !set_sell_price <@user> <item> \"default\" to set the default price.\n"
                                                               f"=================================================================================================================================================")
 
-    @commands.command(help="# Send the adventurer the price of the requested item to sell")
-    @commands.has_role("DM")
-    async def set_sell_price(self, ctx, member: str, item: str, price: str, currency: str = None):
-        transaction = Transactions.get(member, item, TransactionType.SELL)
 
-        if transaction is None:
-            await ctx.send("Transaction not found")
-            return
 
-        if price == "default":
-            _item: Item = ItemsDataBase.get_item(item)
-            price = _item.cost.value * transaction.amount
-            currency = _item.cost.coinType
 
-        transaction.price = int(price)
-        transaction.coin_type = enum_from_str(currency)
-
-        transaction.state = Transactions.TransactionState.PRICE_SET
-
-        await ctx.guild.get_channel(costants.CAMPAIGN_CHAT_ID).send(
-            f"DM has set the price of {transaction.amount} {item} to {price} {currency}")
-
-    @commands.command(help="# Accept item price and sell it")
-    @commands.has_role("Adventurer")
-    async def accept_sell(self, ctx, item: str):
-        transaction = Transactions.get(ctx.author.display_name, item, TransactionType.SELL)
-
-        if transaction is None:
-            await ctx.send("Transaction not found")
-            return
-
-        curr_user = get_user(ctx.author)
-
-        if curr_user is None:
-            return
-
-        curr_user.purse.add(transaction.price, transaction.coin_type.value)
-
-        await ctx.send(f"{transaction.amount} {item} sold for {transaction.price} {transaction.coin_type}")
-
-        if curr_user.inventory.get(item) == transaction.amount:
-            curr_user.inventory.pop(item)
-        else:
-            curr_user.inventory.update({item: curr_user.inventory.get(item) - transaction.amount})
-
-        Transactions.remove(ctx.author.display_name, item, TransactionType.SELL)
 
     @commands.command(help="# Refuse item price and close transaction")
     @commands.has_role("Adventurer")
@@ -1009,9 +927,15 @@ class Game(commands.Cog):
 
         # Check if item is a weapon, armor or shield
         # Invalid items are never added to the inventory
-        if ItemsDataBase.weapons.__contains__(item):
+        if item in ItemsDataBase.weapons:
+            if curr_user.equipped_weapon is not None:
+                curr_user.add_item_to_inv(curr_user.equipped_weapon.name, 1)
+
             curr_user.equipped_weapon = ItemsDataBase.get_item(item)
-        elif ItemsDataBase.armors.__contains__(item):
+        elif item in ItemsDataBase.armors:
+            if curr_user.equipped_armor is not None:
+                curr_user.add_item_to_inv(curr_user.equipped_armor.name, 1)
+
             curr_user.equipped_armor = ItemsDataBase.get_item(item)
             curr_user.update_armor_class()
             if ((curr_user.equipped_armor.str_value == ArmorStr.STR13 and curr_user.total_stats[0] < 13) or
@@ -1024,7 +948,34 @@ class Game(commands.Cog):
             curr_user.has_shield = True
             curr_user.update_armor_class()
 
+        curr_user.remove_item_from_inv(item, 1)
         await ctx.send(f"{item} equipped")
+
+    @commands.command()
+    async def unequip(self, ctx, item: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        item = item.lower()
+
+        if item == "weapon":
+            if curr_user.equipped_weapon is not None:
+                curr_user.add_item_to_inv(curr_user.equipped_weapon.name, 1)
+                curr_user.equipped_weapon = None
+        elif item == "armor":
+            if curr_user.equipped_armor is not None:
+                curr_user.add_item_to_inv(curr_user.equipped_armor.name, 1)
+                curr_user.equipped_armor = None
+                curr_user.update_armor_class()
+                curr_user.speed_debuff = 0
+                curr_user.update_total_speed()
+        else:
+            curr_user.has_shield = False
+            curr_user.update_armor_class()
+
+        await ctx.send(f"{item} unequipped")
 
     @commands.command()
     async def ability_check(self, ctx, ability: str):
@@ -1039,11 +990,34 @@ class Game(commands.Cog):
         # Roll a D20
         roll = D20().throw() + curr_user.stats_modifiers[stat.value]
 
+        if roll == 20:
+            await ctx.send(f"{curr_user.member.display_name}'s {ability} check: Critical hit!")
+            return
+        elif roll == 1:
+            await ctx.send(f"{curr_user.member.display_name}'s {ability} check: Critical failure!")
+            return
+
         # Add proficiency bonus if user is proficient with the ability
         if self.check_other_proficiencies(curr_user, ability):
             roll += curr_user.proficiency_bonus
 
         await ctx.send(f"{curr_user.member.display_name}'s {ability} check: {roll}")
+
+    @commands.command(help="# Roll a dice. Template: !roll_dice <dice> (e.g. 1d6)")
+    async def roll_dice(self, ctx, dice: str):
+        if dice.__contains__("d"):
+            dice_arr = dice.split("d")
+            dice_num = int(dice_arr[0])
+            dice_type = int(dice_arr[1])
+
+            res = 0
+
+            for i in range(dice_num):
+                res += random.randint(1, dice_type)
+
+            await ctx.send(f"{ctx.author.display_name} rolled {dice}: {res}")
+        else:
+            await ctx.send("Invalid dice format")
 
     @commands.command()
     @commands.has_role("DM")
@@ -1141,34 +1115,36 @@ class Game(commands.Cog):
 
         await ctx.send(curr_user.get_info())
 
-    @commands.command()
+    @commands.command(help="# Create a new monster. Template: !create_monster <name> <AC> <HP> <STR> <DEX> <CON> <INT> <WIS> <CHA> <attack_bonus> <dice_num> <damage_dice> <damage_bonus>")
     @commands.has_role("DM")
-    async def create_monster(self, ctx, name: str, AC: int, HP: int, attack_bonus: int, dice_num: int, damage_dice: int, damage_bonus: int):
+    async def create_monster(self, ctx, name: str, AC: int, HP: int,
+                             STR: int, DEX: int, CON: int, INT: int, WIS: int, CHA: int,
+                             attack_bonus: int, dice_num: int, damage_dice: int, damage_bonus: int):
         if MonstersDataBase.monsters.__contains__(name):
             await ctx.send(f"Monster {name} already exists in the database.")
             return
 
-        monster: Monster = Monster(name, AC, HP, attack_bonus, dice_num, damage_dice, damage_bonus)
+        monster: Monster = Monster(name, AC, HP,
+                                   STR, DEX, CON, INT, WIS, CHA,
+                                   attack_bonus, dice_num, damage_dice, damage_bonus)
 
         MonstersDataBase.monsters.update({name: monster})
 
         if MonstersDataBase.monsters.__contains__(name):
-            await ctx.send(f"Monster {name} created and added to the database.\n"
-                           f"You can now access the monster by typing !get_monster <monster_name>")
+            await ctx.send(f"Monster {name} created and added to the database.")
         else:
             await ctx.send("Monster creation failed")
 
     @commands.command(help="# Set the current campaign's encounter."
                            "Template: !set_encounter <monster_name_1>:<count>, <monster_name_2>:<count>, ...")
     @commands.has_role("DM")
-    async def set_encounter(self, ctx, arr: str):
+    async def set_encounter(self, ctx, monster_arr: str):
         # Encounter constructor automatically sets the monsters' dictionary
-        costants.curr_campaign.curr_encounter = Encounter(arr)
+        costants.curr_campaign.curr_encounter = Encounter(monster_arr)
 
         await ctx.send(costants.curr_campaign.curr_encounter.toString())
-
-        # TODO: Roll for initiative (monsters and players) Creates a queue (can pass the turn and not controlling if it's the player's turn)
-        #  just prints "It's player's x turn"
+        await ctx.send(costants.curr_campaign.curr_encounter.initiative_order_to_string())
+        await ctx.send("It's " + costants.curr_campaign.curr_encounter.get_first_in_order() + "'s turn")
 
     @commands.command(help="# Attack a monster in the current encounter. Template: !attack_monster <ability> <monster_id>")
     async def attack_monster(self, ctx, ability: str, monster_id: str):
@@ -1178,6 +1154,10 @@ class Game(commands.Cog):
 
         if curr_user is None or monster is None:
             await ctx.send("User or monster not found")
+            return
+
+        if curr_user.equipped_weapon is None:
+            await ctx.send("No weapon equipped")
             return
 
         # Roll a D20
@@ -1202,27 +1182,27 @@ class Game(commands.Cog):
                 roll += curr_user.stats_modifiers[stat.value]
 
                 # Add proficiency bonus if user is proficient with the weapon
-                if (curr_user.weapon_proficiencies.__contains__(curr_user.equipped_weapon.weaponType) or
-                        self.check_other_proficiencies(curr_user, curr_user.equipped_weapon.name)):
-                    roll += curr_user.proficiency_bonus
+                if curr_user.equipped_weapon is not None:
+                    if (curr_user.weapon_proficiencies.__contains__(curr_user.equipped_weapon.weaponType) or
+                            self.check_other_proficiencies(curr_user, curr_user.equipped_weapon.name)):
+                        roll += curr_user.proficiency_bonus
 
                 doesHit = roll >= monster.AC
 
             if doesHit:
                 damage = curr_user.equipped_weapon.damage.throw_n(curr_user.equipped_weapon.dice_num)
 
-                monsterHP = monster.take_damage(damage)
+                res = costants.curr_campaign.curr_encounter.damage(monster_id, damage)
 
-                if monsterHP <= 0:
-                    costants.curr_campaign.curr_encounter.remove(monster_id)
-                    await ctx.send(f"{monster.name} has been defeated.")
+                await ctx.send(res)
 
-                    if costants.curr_campaign.curr_encounter.isEmpty():
-                        await ctx.send("The encounter has been cleared.")
+                if costants.curr_campaign.curr_encounter.check_if_encounter_over():
+                    await ctx.send("The encounter has been cleared.")
                 else:
-                    await ctx.send(f"{monster.name} took {damage} damage. Remaining hit points: {monsterHP}")
+                    await ctx.send("It's " + costants.curr_campaign.curr_encounter.get_next_in_order() + "'s turn.")
             else:
-                await ctx.send(f"{curr_user.member.display_name}'s attack missed")
+                await ctx.send(f"{curr_user.member.display_name}'s attack missed.")
+                await ctx.send("It's " + costants.curr_campaign.curr_encounter.get_next_in_order() + "'s turn.")
 
     @commands.command()
     @commands.has_role("DM")
@@ -1243,9 +1223,145 @@ class Game(commands.Cog):
         else:
             await ctx.send(f"{curr_user.member.display_name} took {damage} damage. Remaining hit points: {curr_user.currHitPoints}")
 
+        await ctx.send("It's " + costants.curr_campaign.curr_encounter.get_next_in_order() + "'s turn.")
+
     @commands.command()
     async def get_all_monsters(self, ctx):
         await ctx.send(MonstersDataBase.get_all_monsters())
+
+    @commands.command()
+    async def prepare(self, ctx, spell_name: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        spell_name = spell_name.lower()
+
+        if SpellDataBase.get_spell(spell_name) is None:
+            await ctx.send("Spell not found")
+            return
+
+        if curr_user.adv_class == AdvClass.WIZARD or curr_user.adv_class == AdvClass.CLERIC:
+            if SpellDataBase.get_spell(spell_name).level == 0:
+                await ctx.send("Cannot prepare cantrips")
+                return
+
+            if len(curr_user.prepared_spells) >= curr_user.max_preparable_spells:
+                await ctx.send("No more spell slots available")
+                return
+
+            if spell_name in curr_user.prepared_spells:
+                await ctx.send("Spell already prepared")
+                return
+
+            if spell_name not in curr_user.spells_known_list:
+                await ctx.send("Spell not known")
+                return
+
+            curr_user.prepared_spells.append(spell_name)
+            await ctx.send(f"{spell_name} prepared. Remaining spell slots: {curr_user.max_preparable_spells - len(curr_user.prepared_spells)}")
+        else:
+            await ctx.send("You cannot prepare spells")
+            return
+
+    @commands.command()
+    async def unprepare(self, ctx, spell_name: str):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        spell_name = spell_name.lower()
+
+        if spell_name in curr_user.prepared_spells:
+            curr_user.prepared_spells.remove(spell_name)
+            await ctx.send(f"{spell_name} unprepared. Remaining spell slots: {curr_user.max_preparable_spells - len(curr_user.prepared_spells)}")
+        else:
+            await ctx.send("Spell was never prepared")
+
+    @commands.command()
+    async def cast(self, ctx, spell_name: str, params: str = None):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        spell_name = spell_name.lower()
+
+        if spell_name in SpellDataBase.spell_dic:
+            if SpellDataBase.spell_dic.get(spell_name).level == 0:
+                if spell_name in curr_user.spells_known_list:
+                    res = SpellDataBase.spell_dic.get(spell_name).cast(curr_user, params)
+                    await ctx.send(res)
+                else:
+                    await ctx.send("Spell not known")
+            else:
+                if spell_name in curr_user.prepared_spells and curr_user.curr_spell_slots > 0:
+                    res = SpellDataBase.spell_dic.get(spell_name).cast(curr_user, params)
+                    await ctx.send(res)
+                else:
+                    if curr_user.curr_spell_slots <= 0:
+                        await ctx.send("No slot available")
+                    else:
+                        await ctx.send("Spell not prepared")
+        else:
+            await ctx.send("Spell not found")
+
+    @commands.command()
+    async def rest(self, ctx):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        curr_user.curr_spell_slots = curr_user.max_spell_slots
+        await ctx.send("Spell slots restored. You have now " + str(curr_user.curr_spell_slots) + " spell slots.")
+
+    @commands.command()
+    async def get_from_name(self, ctx, name: str):
+        curr_user = None
+        for user in costants.curr_campaign.campaign_member_list:
+            if user.member.display_name == name:
+                curr_user = user
+
+        await ctx.send("Mention: " + curr_user.member.mention)
+
+    @commands.command()
+    async def get_prepared_spells(self, ctx):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        await ctx.send(curr_user.get_prepared_spells_str())
+
+    @commands.command()
+    async def get_inventory(self, ctx):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        await ctx.send(curr_user.get_inventory_str())
+
+    @commands.command()
+    async def get_equipment(self, ctx):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        await ctx.send(curr_user.get_equipment_str())
+
+    @commands.command()
+    async def get_known_spells(self, ctx):
+        curr_user = get_user(ctx.author)
+
+        if curr_user is None:
+            return
+
+        await ctx.send(curr_user.get_known_spells_str())
 
 
 async def setup(bot):

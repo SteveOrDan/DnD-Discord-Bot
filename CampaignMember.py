@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 import enum
 
@@ -146,74 +148,123 @@ class RaceTypeEnum(enum.Enum):
 
 
 class CampaignMember:
-    member: discord.Member
 
-    max_inventory_weight: int = 0
-    curr_inventory_weight: int = 0
-    inventory: {str: int} = {}
-    equipped_weapon: Weapon = None
-    equipped_armor: Armor = None
-    has_shield: bool = False
+    def __init__(self):
+        self.member: discord.Member | None = None
 
-    isAdventurer: bool = False
-    isDM: bool = False
+        self.max_inventory_weight: int = 0
+        self.curr_inventory_weight: int = 0
+        self.inventory: dict = dict()  # itemName -> quantity
+        self.equipped_weapon: Weapon | None = None
+        self.equipped_armor: Armor | None = None
+        self.has_shield: bool = False
 
-    player_num: int = 0
+        self.isAdventurer: bool = False
+        self.isDM: bool = False
 
-    race: RaceTypeEnum
-    adv_class: AdvClass
-    alignment: str = "None"
-    background: str = "None"
-    traits: str = "None"
-    ideals: str = "None"
-    bonds: str = "None"
-    flaws: str = "None"
+        self.player_num: int = 0
 
-    level: int = 1
-    xp: int = 0
+        self.race: RaceTypeEnum | None = None
+        self.adv_class: AdvClass | None = None
+        self.alignment: str = "None"
+        self.background: str = "None"
+        self.traits: str = "None"
+        self.ideals: str = "None"
+        self.bonds: str = "None"
+        self.flaws: str = "None"
 
-    total_speed: int = 0
-    race_speed: int = 0
-    speed_debuff: int = 0
+        self.max_cantrips_known: int = 0  # 3
+        self.max_spell_slots: int = 0  # 2
+        self.curr_spell_slots: int = 0
+        self.max_preparable_spells: int = 0  # int / wis mod + level
+        self.prepared_spells: [str] = []
+        self.spells_known_list: [str] = []
 
-    maxHitPoints: int = 0
-    currHitPoints: int = 0
+        self.level: int = 1
+        self.xp: int = 0
 
-    weapon_proficiencies: [WeaponType] = []
-    armor_proficiencies: [ArmorType] = []
-    saving_throw_proficiencies: [str] = []
-    race_proficiencies: [str] = []
-    class_proficiencies: [str] = []
+        self.total_speed: int = 0
+        self.race_speed: int = 0
+        self.speed_debuff: int = 0
 
-    proficiency_bonus: int = 2
+        self.maxHitPoints: int = 0
+        self.currHitPoints: int = 0
 
-    # Display only stats channels
-    STR_ch: discord.VoiceChannel = None
-    DEX_ch: discord.VoiceChannel = None
-    CON_ch: discord.VoiceChannel = None
-    INT_ch: discord.VoiceChannel = None
-    WIS_ch: discord.VoiceChannel = None
-    CHA_ch: discord.VoiceChannel = None
+        self.weapon_proficiencies: [WeaponType] = []
+        self.armor_proficiencies: [ArmorType] = []
+        self.saving_throw_proficiencies: [str] = []
+        self.race_proficiencies: [str] = []
+        self.class_proficiencies: [str] = []
 
-    # Stats
-    armor_class: int = 0
+        self.proficiency_bonus: int = 2
 
-    stats_modifiers: [int] = [0, 0, 0, 0, 0, 0]
+        # Display only stats channels
+        self.STR_ch: discord.VoiceChannel | None = None
+        self.DEX_ch: discord.VoiceChannel | None = None
+        self.CON_ch: discord.VoiceChannel | None = None
+        self.INT_ch: discord.VoiceChannel | None = None
+        self.WIS_ch: discord.VoiceChannel | None = None
+        self.CHA_ch: discord.VoiceChannel | None = None
 
-    total_stats: [int] = [0, 0, 0, 0, 0, 0]
+        # Stats
+        self.armor_class: int = 0
 
-    rolled_stats: [int] = [0, 0, 0, 0, 0, 0]
+        self.stats_modifiers: [int] = [0, 0, 0, 0, 0, 0]
 
-    race_stats: [int] = [0, 0, 0, 0, 0, 0]
+        self.total_stats: [int] = [0, 0, 0, 0, 0, 0]
 
-    equip_stats: [int] = [0, 0, 0, 0, 0, 0]
+        self.rolled_stats: [int] = [0, 0, 0, 0, 0, 0]
 
-    stats_set_num: int = -1
-    stats_set_bools = [False, False, False, False, False, False]
+        self.race_stats: [int] = [0, 0, 0, 0, 0, 0]
 
-    roll_list: [int] = []
+        self.equip_stats: [int] = [0, 0, 0, 0, 0, 0]
 
-    purse: Purse = None
+        self.stats_set_num: int = -1
+        self.stats_set_bools = [False, False, False, False, False, False]
+
+        self.roll_list: [int] = []
+
+        self.purse: Purse | None = None
+
+    def confirm_race(self):
+        self.race_stats[0] = self.race.get_str()
+        self.race_stats[1] = self.race.get_dex()
+        self.race_stats[2] = self.race.get_con()
+        self.race_stats[3] = self.race.get_int()
+        self.race_stats[4] = self.race.get_wis()
+        self.race_stats[5] = self.race.get_cha()
+
+        self.race_speed = self.race.get_speed()
+
+        self.race_proficiencies = self.race.get_race_proficiencies()
+
+        self.update_all_total_stat()
+        self.update_all_stat_ch()
+        
+    def confirm_class(self):
+        self.saving_throw_proficiencies = self.adv_class.get_saving_throws()
+        self.armor_proficiencies = self.adv_class.get_armor_proficiencies()
+        self.weapon_proficiencies = self.adv_class.get_weapon_proficiencies()
+        self.class_proficiencies = self.adv_class.get_class_proficiencies()
+
+        if self.adv_class == AdvClass.CLERIC:
+            self.max_cantrips_known = 3
+            self.max_spell_slots = 2
+            self.curr_spell_slots = 2
+            self.max_preparable_spells = max(self.stats_modifiers[4] + self.level, 1)
+            self.spells_known_list = ["light", "resistance", "spare the dying", "detect magic", "mealing word"]
+        elif self.adv_class == AdvClass.WIZARD:
+            self.max_cantrips_known = 3
+            self.max_spell_slots = 2
+            self.curr_spell_slots = 2
+            self.max_preparable_spells = max(self.stats_modifiers[3] + self.level, 1)
+            self.spells_known_list = ["light", "mage hand", "prestidigitation", "detect magic", "magic missile"]
+        else:
+            self.max_cantrips_known = 0
+            self.max_spell_slots = 0
+            self.curr_spell_slots = 0
+            self.max_preparable_spells = 0
+            self.spells_known_list = []
 
     def update_total_stat(self, stat_index: int):
         self.total_stats[stat_index] = self.rolled_stats[stat_index] + self.race_stats[stat_index] + self.equip_stats[stat_index]
@@ -243,6 +294,7 @@ class CampaignMember:
 
     async def update_all_stat_ch(self):
         for i in range(6):
+            await asyncio.sleep(1)
             await self.update_stat_ch(i)
 
     def update_stats_modifiers(self):
@@ -250,15 +302,29 @@ class CampaignMember:
             self.stats_modifiers[i] = (self.total_stats[i] - 10) // 2
 
     def update_armor_class(self):
-        self.armor_class = self.equipped_armor.armor_class
+        if self.equipped_armor is None:
+            self.armor_class = 10 + self.stats_modifiers[1]
+        else:
+            self.armor_class = self.equipped_armor.armor_class
 
-        if self.equipped_armor.armor_type == ArmorType.LIGHT:
-            self.armor_class += self.stats_modifiers[1]
-        elif self.equipped_armor.armor_type == ArmorType.MEDIUM:
-            self.armor_class += min(self.stats_modifiers[1], 2)
+            if self.equipped_armor.armor_type == ArmorType.LIGHT:
+                self.armor_class += self.stats_modifiers[1]
+            elif self.equipped_armor.armor_type == ArmorType.MEDIUM:
+                self.armor_class += min(self.stats_modifiers[1], 2)
 
         if self.has_shield:
             self.armor_class += 2
+
+    def update_max_hit_points(self):
+        self.maxHitPoints = self.adv_class.get_hit_dice().throw() + self.stats_modifiers[2]
+
+        self.currHitPoints = self.maxHitPoints
+
+    def heal(self, heal_amount: int):
+        self.currHitPoints += heal_amount
+
+        if self.currHitPoints > self.maxHitPoints:
+            self.currHitPoints = self.maxHitPoints
 
     def get_info(self) -> str:
         res = f"{self.member.mention} - {self.member.display_name}\n"
@@ -270,12 +336,16 @@ class CampaignMember:
             res += "Inventory: "
 
             for item in self.inventory:
-                res += f"{item}; "
+                res += f"{item} - {self.inventory.get(item)}; "
 
             res += "\n"
 
-            res += f"Equipped weapon: {self.equipped_weapon.name}\n"
-            res += f"Equipped armor: {self.equipped_armor.name}\n"
+            if self.equipped_weapon is not None:
+                res += f"Equipped weapon: {self.equipped_weapon.name}\n"
+
+            if self.equipped_armor is not None:
+                res += f"Equipped armor: {self.equipped_armor.name}\n"
+
             res += f"Has shield: {self.has_shield}\n"
 
             res += f"Player number: {self.player_num}\n"
@@ -290,7 +360,7 @@ class CampaignMember:
 
             res += f"Level: {self.level}\n"
 
-            res += f"Hit points: {self.maxHitPoints}\n"
+            res += f"Hit points: {self.currHitPoints}/{self.maxHitPoints}\n"
 
             res += "Weapon proficiencies: "
             for weapon_prof in self.weapon_proficiencies:
@@ -393,5 +463,68 @@ class CampaignMember:
         for item in self.inventory.keys():
             self.curr_inventory_weight += item.weight * self.inventory.get(item)
 
+    def get_inventory_str(self) -> str:
+        if len(self.inventory) == 0:
+            return "No items in inventory"
+
+        res = "Inventory:\n"
+
+        for item in self.inventory.keys():
+            res += f"{item} -> {self.inventory.get(item)}\n"
+
+        return res
+
+    def get_equipment_str(self) -> str:
+        res = ""
+
+        weapon_str = "No weapon equipped\n"
+        armor_str = "No armor equipped\n"
+
+        if self.equipped_weapon is not None:
+            weapon_str = f"Weapon: {self.equipped_weapon.name}\n"
+
+        if self.equipped_armor is not None:
+            armor_str = f"Armor: {self.equipped_armor.name}\n"
+
+        res += weapon_str
+        res += armor_str
+
+        return res
+
+    def get_known_spells_str(self) -> str:
+        if len(self.spells_known_list) == 0:
+            return "No known spells"
+
+        res = "Known spells:\n"
+
+        for spell in self.spells_known_list:
+            res += f"- {spell}\n"
+
+        return res
+
+    def get_prepared_spells_str(self) -> str:
+        if len(self.prepared_spells) == 0:
+            return "No prepared spells"
+
+        res = "Prepared spells:\n"
+
+        for spell in self.prepared_spells:
+            res += f"- {spell}\n"
+
+        return res
+
     def update_total_speed(self):
         self.total_speed = self.race_speed - self.speed_debuff
+
+    def remove_item_from_inv(self, item_name: str, amount: int):
+        if item_name in self.inventory.keys():
+            self.inventory.update({item_name: self.inventory.get(item_name) - amount})
+
+            if self.inventory[item_name] <= 0:
+                self.inventory.pop(item_name)
+
+    def add_item_to_inv(self, item_name: str, amount: int):
+        if item_name in self.inventory.keys():
+            self.inventory.update({item_name: self.inventory.get(item_name) + amount})
+        else:
+            self.inventory.update({item_name: amount})

@@ -13,6 +13,9 @@ class Dice:
             res += self.throw()
         return res
 
+    def __str__(self):
+        return f"d{self.faces}"
+
 
 class D4(Dice):
     faces = 4

@@ -83,6 +83,9 @@ human_names = {
 
 
 def rand(race, gender, clan=None) -> str:
+    race = race.lower()
+    gender = gender.lower()
+
     if clan is not None and race == "human":
         if human_names.__contains__(clan):
             if human_names.get(clan).__contains__(gender):
