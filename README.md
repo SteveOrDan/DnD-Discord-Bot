@@ -1,6 +1,183 @@
-**Commands list**
 
-**Campaign management**
+
+
+
+
+
+
+# Setting up the DnD Discord Server
+
+**At the bottom you can find the command list**
+
+This guide is made up of 3 sections: 
+
+A. [**Server Creation**](#server_creation), where it explains how to create the ad hoc server for the Discord bot;
+
+B. [**Bot code download**](#bot_download), where it explains how to correctly download the bot code;
+
+C. [**Bot Setup**](#bot_setup), where it explains how to correctly connect the bot to the Discord server;
+
+##  A. <a name="server_creation"></a>**Server Creation**
+1. **Open Discord**: Launch the Discord application on your device.
+1. **Enter the link in an internet browser**: Copy the provided template link and paste it into the address bar of any internet browser.
+   Template link: **https://discord.new/gwBAdaPzqNcW**
+   
+   ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.001.png)
+1. **Click on “Continue to Discord”**: After entering the link, you will see an option called “Continue to Discord”. Click on it.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.002.png)
+1. **Return to Discord**: Go back to the Discord application. A window should have appeared to create a server based on the provided template.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.003.png)
+1. **Enter the desired name**: Enter the name you want for your server in the provided text field.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.004.png)
+1. **Click on “Create Server”**: After entering the name, click on the “Create Server” button. Now, you have created your Discord server using the provided template!
+**
+
+## B. <a name="bot_download"></a>**Bot code download**
+1. **Open the Repository**: Open your internet browser and navigate to the GitHub repository using the provided link.
+   Repository GitHub: <https://github.com/SteveOrDan/DnD-Discord-Bot>      
+   ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.005.png)
+   
+1. **Access the Code**: Once you’re on the repository page, look for a green button labeled “Code” at the top right of the page. Click on this button to open a dropdown menu.    
+   ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.006.png)
+   
+1. **Download the ZIP**: In the dropdown menu, you’ll see an option labeled “Download ZIP”. Click on this option to start the download process. The code from the repository will be downloaded as a ZIP file to your computer.
+1. **Extract the Files**: After the ZIP file has finished downloading, locate it in your downloads folder or wherever your browser saves downloaded files. Right-click on the ZIP file and select “Extract All” (or a similar option, depending on your operating system). Follow the prompts to extract the files from the ZIP. Once the extraction process is complete, you’ll have a folder containing all the files from the GitHub repository.
+
+## C. <a name="bot_setup"></a>**Bot Setup**
+1. **Go to the Discord Developer Portal**: Open your web browser and navigate to the Discord Developer Portal.
+   Discord developer portal: <https://discord.com/developers/applications>
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.007.png)
+
+1. **Create a New Application**: Click on the “New Application” button. Give your application a name and then click “Create”. 
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.008.png)
+
+1. **Go to the OAuth2 Page**: In your application’s settings, navigate to the “OAuth2” tab.  
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.009.png)
+
+1. **Select Bot under OAuth2 URL Generator**: Under the “OAuth2 URL Generator”, select the “bot” checkbox.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.010.png)
+
+1. **Select Administrator in Bot Permissions**: Scroll down to the “Bot Permissions” section and select the “Administrator” checkbox.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.011.png)
+
+1. **Copy the Generated Link**: At the bottom of the page, you’ll see a generated URL. Click on “Copy” to copy this URL.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.012.png)
+
+1. **Paste the Link in a New Browser Tab**: Open a new tab in your web browser and paste the copied URL into the address bar.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.013.png)
+
+1. **Select Your Server**: A new page will open asking you to select a server. Choose the server where you want to add your bot, then click on the “Authorise” button.  
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.014.png)
+
+1. **Navigate to the Bot Tab**: In your application’s settings, find and click on the “Bot” tab. This will take you to the page where your bot’s settings are located.  
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.015.png)
+
+1. **Press Reset Token**: On the Bot settings page, find the “Token” section and click on “Reset Token”.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.016.png)
+ 
+1. **Confirm Reset**: A pop-up message will appear asking you to confirm the reset. Click on “Yes, do it!” to confirm.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.017.png)
+
+1. **Enter Password**: You will be asked to enter your password to confirm the reset. Enter your password and proceed.
+ ![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.018.png)
+
+1. **Copy the New Token**: After resetting, a new token will be generated. Click on “Copy” to copy your bot’s new token. This token is what your bot uses to log in to Discord, so keep it safe!
+
+9. **Locate the Extracted Code Folder**: Navigate to the location on your computer where you previously extracted the bot code. This could be in your “Downloads” folder, “Documents” folder, or wherever you chose to extract the files.
+9. **Open the Folder**: Double-click on the folder to open it. You should now see all the files that were contained in the ZIP file.
+9. **Open the “constants.py” File**: In the folder, find the file named “constants.py”. Right-click on the file and select “Open with”. Choose your preferred code editor from the list. If you don’t see your code editor, click on “Choose another app” and locate it.
+9. **Navigate to the BOT\_TOKEN Line**: Scroll down to the bottom of the “constants.py” file until you find a line that says BOT\_TOKEN. This line should look something like this: 
+   BOT\_TOKEN = "MTIxMDIxMzc1NTYxMTM5…".
+9. **Replace the Bot Token**: Replace the text between the quotation marks with the bot token you copied in step 13. The line should now look like this: BOT\_TOKEN = " *your\_new\_bot\_token* ".
+9. **Save Your Changes**: After replacing the bot token, save your changes. You can usually do this by pressing Ctrl+S or selecting “Save” from the file menu.
+9. **Update IDs in the “constants.py” File**: For each entry in the “constants.py” file, you need to find the corresponding element in your Discord server and copy its ID. To do this, right-click on the element (this could be a user, channel, role, etc.) and select “Copy ID”. Then, go back to the “constants.py” file and replace the existing ID with the one you just copied. Make sure to place the new ID in the correct spot in the file.
+   How to do:
+   1. **Enable Developer Mode**: First, you need to enable Developer Mode in Discord. To do this, click on the gear icon near your username at the bottom left to open User Settings. Then, navigate to the “Appearance” tab under “App Settings”. Scroll down to the “Advanced” section and toggle on “Developer Mode”.
+   1. **Copy Channel ID**: To copy a channel ID, go to the channel from which you want to copy the ID. Right-click on the channel name at the top of the screen and select “Copy ID”. The channel ID is now copied to your clipboard.
+   1. **Copy Role ID**: To copy a role ID, you need to go to the server settings. Click on the server name at the top left of the screen and select “Server Settings”. Then, navigate to the “Roles” tab. Here, you’ll see a list of all roles in your server. To copy a role ID, right-click on the role and select “Copy ID”. The role ID is now copied to your clipboard.
+
+## IDs legend:
+
+- GENERAL\_CHAT\_ID: The ID of the general chat channel in your Discord server.
+- GUILD\_ID: The ID of your Discord server (also known as a guild in Discord’s API).
+- DEFAULT\_ROLES: The default roles that are assigned to new members when they join your server.
+- DEFAULT\_CH: The default channel that new members are directed to when they join your server.
+- CAMPAIGN\_CHANNELS: The channels in your server that are used for campaign discussions.
+
+  Channels ID
+
+- CAMPAIGN\_CHAT\_ID: The ID of the channel used for campaign chat.
+- GET\_FEATURES\_CHAT\_ID: The ID of the channel where users can get features for their characters.
+- SET\_ROLES\_CHAT\_ID: The ID of the channel where users can set their roles.
+- DM\_CHAT\_ID: The ID of the channel for direct messages.
+- RACE\_INFO\_CHAT\_ID: The ID of the channel where information about races is posted.
+- CLASS\_INFO\_CHAT\_ID: The ID of the channel where information about classes is posted.
+- SET\_RACE\_CHAT\_ID: The ID of the channel where users can set their character’s race.
+- SET\_CLASS\_CHAT\_ID: The ID of the channel where users can set their character’s class.
+
+  Player based channels
+
+- PLAYERS\_ROLL\_STATS\_CH\_ID: The ID of the channel where players roll for their character’s stats.
+- PLAYERS\_STR\_STAT\_CH\_ID: The ID of the channel where players set their character’s Strength stat.
+- PLAYERS\_DEX\_STAT\_CH\_ID: The ID of the channel where players set their character’s Dexterity stat.
+- PLAYERS\_CON\_STAT\_CH\_ID: The ID of the channel where players set their character’s Constitution stat.
+- PLAYERS\_INT\_STAT\_CH\_ID: The ID of the channel where players set their character’s Intelligence stat.
+- PLAYERS\_WIS\_STAT\_CH\_ID: The ID of the channel where players set their character’s Wisdom stat.
+- PLAYERS\_CHA\_STAT\_CH\_ID: The ID of the channel where players set their character’s Charisma stat.
+
+  Roles ID
+
+- DM\_ROLE\_ID: The ID of the Dungeon Master role.
+- ADVENTURER\_ROLE\_ID: The ID of the Adventurer role.
+- CAMPAIGN\_ROLE\_ID: The ID of the Campaign role.
+- HUMAN\_ROLE\_ID: The ID of the Human race role.
+- STOUT\_ROLE\_ID: The ID of the Stout subrace role.
+- LIGHTFOOT\_ROLE\_ID: The ID of the Lightfoot subrace role.
+- HALFLING\_ROLE\_ID: The ID of the Halfling race role.
+- WOOD\_ELF\_ROLE\_ID: The ID of the Wood Elf subrace role.
+- HIGH\_ELF\_ROLE\_ID: The ID of the High Elf subrace role.
+- ELF\_ROLE\_ID: The ID of the Elf race role.
+- MOUNTAIN\_DWARF\_ROLE\_ID: The ID of the Mountain Dwarf subrace role.
+- HILL\_DWARF\_ROLE\_ID: The ID of the Hill Dwarf subrace role.
+- DWARF\_ROLE\_ID: The ID of the Dwarf race role.
+- WIZARD\_ROLE\_ID: The ID of the Wizard class role.
+- ROGUE\_ROLE\_ID: The ID of the Rogue class role.
+- FIGHTER\_ROLE\_ID: The ID of the Fighter class role.
+- CLERIC\_ROLE\_ID: The ID of the Cleric class role.
+- BUILDING\_CHARACTER\_ROLE\_ID: The ID of the role for users who are currently building their character.
+- CHOOSING\_ROLE\_ROLE\_ID: The ID of the role for users who are currently choosing their role.
+
+  Player Roles ID
+
+- P1\_ROLE\_ID: The ID of the role for Player 1.
+- P2\_ROLE\_ID: The ID of the role for Player 2.
+- P3\_ROLE\_ID: The ID of the role for Player 3.
+- P4\_ROLE\_ID: The ID of the role for Player 4.
+- P5\_ROLE\_ID: The ID of the role for Player 5.
+
+  Alignment Roles ID
+
+- LAWFUL\_GOOD\_ROLE\_ID: The ID of the Lawful Good alignment role.
+- NEUTRAL\_GOOD\_ROLE\_ID: The ID of the Neutral Good alignment role.
+- CHAOTIC\_GOOD\_ROLE\_ID: The ID of the Chaotic Good alignment role.
+- LAWFUL\_NEUTRAL\_ROLE\_ID: The ID of the Lawful Neutral alignment role.
+- NEUTRAL\_ROLE\_ID: The ID of the Neutral alignment role.
+- CHAOTIC\_NEUTRAL\_ROLE\_ID: The ID of the Chaotic Neutral alignment role.
+- LAWFUL\_EVIL\_ROLE\_ID: The ID of the Lawful Evil alignment role.
+- NEUTRAL\_EVIL\_ROLE\_ID: The ID of the Neutral Evil alignment role.
+- CHAOTIC\_EVIL\_ROLE\_ID: The ID of the Chaotic Evil alignment role.
+
+
+
+
+
+> [!NOTE]
+> Here start the command list.
+
+
+# Commands list
+
+## Campaign management
 
 - **!cc \<user1> \<user2>** **:** 
   - Channel: #general
@@ -13,7 +190,7 @@
   - Context: To start a campaign only when all players has set a role.
   - Description: It’s a command that can be used only after creating a campaign, when all users specified in the !cc command have chosen a role. With this command, the DM is given access to his personal chat #dm-chat. The adventurers instead are given access to a list of channels that allows them to create their character for the campaign.
 
-**Building a character**
+## Building a character
 
 - **!info** **:** 
   - Description: Sends a link to download the Basic rules book.
@@ -38,7 +215,7 @@
   - Context: After using !sc, only for an adventurer.
   - Description: Allows an adventurer to quickly create a character if they already know how to create one. Every player is given 27 points, and they can “spend” those points in stats. Each stat value has a corresponding value in points used, and the player cannot exceed that limit, otherwise the character creation will be aborted.
 
-**Optional character features**
+## Optional character features
 
 - **!set\_name <character\_name>:**
   - Channel: #character-features
@@ -67,7 +244,7 @@
   - Context: While creating a character (Optional)
   - Description: Sets the flaws for the user’s character.
 
-**Transactions and items**
+## Transactions and items
 
 - **!request\_buy <item\_name> \<amount = 1>:**
   - Channel: None (Usually#campaign-chat)
@@ -101,7 +278,7 @@
   - Context: During adventure.
   - Description: A character can decide to unequip an item (“armor” or “weapon”) and if the item is equipped, it is moved back to the inventory.
 
-**Dice rolls**
+## Dice rolls
 
 - **!ability\_check \<ability> :**
   - Context: Whenever the DM request an ability check.
@@ -112,7 +289,7 @@
   - Context: Whenever requested by the DM.
   - Description: The user throws a D20 and adds the stat modifier and the proficiency bonus (if available)
 
-**Combat**
+## Combat
 
 - **!create\_monster \<name> \<AC> \<HP> \<STR> \<DEX> \<CON> \<INT> \<WIS> \<CHA> <attack\_bonus> <dice\_num> <damage\_dice> <damage\_bonus>:**
   - Description: Only for the DM. Allows him to create a new monster and add it to the monster data base. After creating the monster, it can be used in an encounter for the adventurers.
@@ -125,7 +302,7 @@
   - Context: During a fight.
   - Description: Only for the DM. Allows a monster to attack an adventurer and eventually deal damage to him.
 
-**Spells**
+## Spells
 
 - **!prepare <spell\_name> :**
   - Description: Allows a cleric or a wizard to prepare a spell that can be casted. The adventurer needs to know the spell he is preparing.
@@ -150,7 +327,7 @@
 - **!rest :**
   - Description: The adventurer can rest and restore all available slots to cast magic spells.
 
-**Miscellaneous**
+## Miscellaneous
 
 - **!get\_prepared\_spells :**
   - Description: The bot sends a message with all the user’s prepared spells.
@@ -164,4 +341,6 @@
   - Description: The bot sends a message with all the information available of the specified user.
 - **!get\_all\_monsters :** 
   - Description: The bot sends a message containing all the monsters stored in the database and their information.
+
+
 
