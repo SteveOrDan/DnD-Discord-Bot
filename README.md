@@ -2,7 +2,7 @@
 
 **Campaign management**
 
-- **!cc <user1> <user2> …** **:** 
+- **!cc <user1> <user2>** **:** 
   - Channel: #general
   - Context: To start a campaign in the server.
   - Description: Needs at least 3 users but less than 7 users to start a campaign. All users are given the “Choosing role” role, that allows them to select a role in the current campaign (DM or Adventurer). Only 1 DM may exist per campaign.
