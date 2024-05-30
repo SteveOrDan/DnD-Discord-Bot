@@ -1,5 +1,5 @@
 import discord
-import costants
+from data import costants
 
 from discord.ext import commands
 

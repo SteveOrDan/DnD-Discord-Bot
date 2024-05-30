@@ -1,21 +1,20 @@
 from discord.ext import commands
-import CampaignRoleView
-from Campaign import Campaign, CampaignState
-from ClassView import ClassView
-from RaceView import RaceView
-from CampaignMember import *
+from view import CampaignRoleView
+from data.Campaign import Campaign, CampaignState
+from view.ClassView import ClassView
+from view.RaceView import RaceView
+from data.CampaignMember import *
 import random
 import data.Names as namesGenerator
 
-import costants
-from data import Transactions, MonstersDataBase, SpellDataBase
+from data import MonstersDataBase, SpellDataBase, costants
 from data.Dice import D4, D20
 from data.Encounter import Encounter
-from data.Items import ItemsDataBase
+from data.Items import ItemsDataBase, Transactions
 from data.Items.Items import Item, ArmorStr
 from data.MonstersDataBase import Monster
 from data.Purse import Purse, enum_from_str
-from data.Transactions import TransactionType
+from data.Items.Transactions import TransactionType
 
 
 def get_user(member: discord.Member) -> CampaignMember | None:
@@ -882,10 +881,6 @@ class Game(commands.Cog):
                                                               f"Type !set_sell_price <@user> <item> <price> <currency> to set the price."
                                                               f"You can also use !set_sell_price <@user> <item> \"default\" to set the default price.\n"
                                                               f"=================================================================================================================================================")
-
-
-
-
 
     @commands.command(help="# Refuse item price and close transaction")
     @commands.has_role("Adventurer")

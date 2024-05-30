@@ -16,19 +16,19 @@ C. [**Bot setup**](#bot_setup), where it explains how to correctly connect the 
 2. **Enter the link in an internet browser**: Copy the provided template link and paste it into the address bar of any internet browser.
    Template link: **https://discord.new/gwBAdaPzqNcW**
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.001.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.001.png)
 
 3. **Click on “Continue to Discord”**: After entering the link, you will see an option called “Continue to Discord”. Click on it.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.002.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.002.png)
 
 4. **Return to Discord**: Go back to the Discord application. A window should have appeared to create a server based on the provided template.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.003.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.003.png)
 
 5. **Enter the desired name**: Enter the name you want for your server in the provided text field.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.004.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.004.png)
 
 6. **Click on “Create Server”**: After entering the name, click on the “Create Server” button. Now, you have created your Discord server using the provided template!
 
@@ -37,11 +37,11 @@ C. [**Bot setup**](#bot_setup), where it explains how to correctly connect the 
 1. **Open the Repository**: Open your internet browser and navigate to the GitHub repository using the provided link.
    Repository GitHub: <https://github.com/SteveOrDan/DnD-Discord-Bot>      
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.005.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.005.png)
    
 2. **Access the Code**: Once you’re on the repository page, look for a green button labeled “Code” at the top right of the page. Click on this button to open a dropdown menu.    
  
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.006.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.006.png)
    
 3. **Download the ZIP**: In the dropdown menu, you’ll see an option labeled “Download ZIP”. Click on this option to start the download process. The code from the repository will be downloaded as a ZIP file to your computer.
 
@@ -51,51 +51,51 @@ C. [**Bot setup**](#bot_setup), where it explains how to correctly connect the 
 1. **Go to the Discord Developer Portal**: Open your web browser and navigate to the Discord Developer Portal.
 2. Discord developer portal: <https://discord.com/developers/applications> and create a new application by clicking on the “New Application” button. Give your application a name and then click “Create”. 
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.007.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.007.png)
 
 3. **Go to the OAuth2 Page**: In your application’s settings, navigate to the “OAuth2” tab.  
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.008.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.008.png)
 
 4. **Select Bot under OAuth2 URL Generator**: Under the “OAuth2 URL Generator”, select the “bot” checkbox.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.009.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.009.png)
 
 5. **Select Administrator in Bot Permissions**: Scroll down to the “Bot Permissions” section and select the “Administrator” checkbox.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.010.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.010.png)
 
 6. **Copy the Generated Link**: At the bottom of the page, you’ll see a generated URL. Click on “Copy” to copy this URL.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.011.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.011.png)
 
 7. **Paste the Link in a New Browser Tab**: Open a new tab in your web browser and paste the copied URL into the address bar.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.012.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.012.png)
 
 8. **Select Your Server**: A new page will open asking you to select a server. Choose the server where you want to add your bot, then click on the “Authorise” button.  
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.013.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.013.png)
 
 9. **Navigate to the Bot Tab**: In your application’s settings, find and click on the “Bot” tab. This will take you to the page where your bot’s settings are located.  
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.014.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.014.png)
 
 10. **Press Reset Token**: On the Bot settings page, find the “Token” section and click on “Reset Token”.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.015.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.015.png)
  
 11. **Confirm Reset**: A pop-up message will appear asking you to confirm the reset. Click on “Yes, do it!” to confirm.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.016.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.016.png)
 
 12. **Enter Password**: You will be asked to enter your password to confirm the reset. Enter your password and proceed.
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.017.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.017.png)
 
 13. **Copy the New Token**: After resetting, a new token will be generated. Click on “Copy” to copy your bot’s new token. This token is what your bot uses to log in to Discord, so keep it safe!
 
-![](/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.018.png)
+![](/assets/images/Aspose.Words.45baa410-07f8-47dc-b001-d0171d7dcb4f.018.png)
 14. **Locate the Extracted Code Folder**: Navigate to the location on your computer where you previously extracted the bot code. This could be in your “Downloads” folder, “Documents” folder, or wherever you chose to extract the files.
 
 15. **Open the Folder**: Double-click on the folder to open it. You should now see all the files that were contained in the ZIP file.

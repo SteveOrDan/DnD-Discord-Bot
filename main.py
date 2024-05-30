@@ -6,10 +6,10 @@ import logging
 
 from discord.ext import commands
 
-import costants
-from CampaignRoleView import CampaignRoleView
-from ClassView import ClassView
-from RaceView import RaceView
+from data import costants
+from view.CampaignRoleView import CampaignRoleView
+from view.ClassView import ClassView
+from view.RaceView import RaceView
 
 
 class PersistentViewBot(commands.Bot):

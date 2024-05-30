@@ -1,6 +1,5 @@
 import discord
-import Campaign
-import costants
+from data import costants, Campaign
 
 
 class CampaignRoleView(discord.ui.View):

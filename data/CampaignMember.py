@@ -3,7 +3,7 @@ import asyncio
 import discord
 import enum
 
-import costants
+from data import costants
 from data.Dice import D8, D10, D6
 from data.Items.Items import Weapon, Armor, ArmorType, WeaponType
 from data.Purse import Purse

@@ -1,7 +1,6 @@
-from CampaignMember import *
+from data.CampaignMember import *
 from data import MonstersDataBase
 from data.Dice import D20
-import operator
 
 
 class Encounter:
@@ -42,8 +41,6 @@ class Encounter:
             initiatives.update({monster: initiative})
 
         sorted_initiatives = sorted(initiatives, key=initiatives.get)
-
-        queue = ""
 
         # Create the queue of initiatives
         for key in sorted_initiatives:

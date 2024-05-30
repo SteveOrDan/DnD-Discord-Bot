@@ -1,4 +1,4 @@
-from data.Cost import Cost
+from data.Items.Cost import Cost
 from data.Dice import D4, D6, D8
 from data.Items.Items import Weapon, WeaponType, WeaponProperty, ArmorType, Armor, ArmorStr, DamageType
 from data.Purse import CoinType

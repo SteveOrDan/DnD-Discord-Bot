@@ -1,4 +1,4 @@
-from CampaignMember import *
+from data.CampaignMember import *
 
 
 def get_user(member: discord.Member) -> CampaignMember | None:

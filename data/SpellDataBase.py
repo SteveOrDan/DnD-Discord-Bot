@@ -1,4 +1,4 @@
-from CampaignMember import *
+from data.CampaignMember import *
 from data.Dice import D4
 
 

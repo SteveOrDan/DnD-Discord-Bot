@@ -1,6 +1,6 @@
 import enum
 
-from CampaignMember import StatTypeEnum
+from data.CampaignMember import StatTypeEnum
 from data import Dice
 from data.Dice import D20
 

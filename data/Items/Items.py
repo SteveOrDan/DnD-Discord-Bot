@@ -1,4 +1,4 @@
-from data.Cost import Cost
+from data.Items.Cost import Cost
 from data.Dice import Dice
 import enum
 
