@@ -1,6 +1,6 @@
 import enum
 
-from CampaignMember import CampaignMember
+from data.CampaignMember import CampaignMember
 from data.Encounter import Encounter
 
 
