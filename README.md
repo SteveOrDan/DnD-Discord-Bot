@@ -1,3 +1,405 @@
+# Class diagram of the project
+```mermaid
+---
+title: DnD campaign
+---
+classDiagram
+namespace DnDCampaign {
+    class Campaign {
+        + player_confirm_delete: []
+
+        + CAMPAIGN_GUILD_ID: int
+
+        + players_num: int
+        + ready_players_num: int 
+        + PLAYER_NUM_MSG_ID: int
+
+        + campaign_member_list: []
+
+        + has_dm_already: bool
+
+        + players_selected_race: []
+        + players_selected_class: []
+
+
+        + check_if_can_start_campaign(self) -> bool
+        + add_ready_player(self)
+        + remove_ready_player(self)
+        + get_member(self, member_name: str) -> CampaignMember | None
+    }
+
+    class CampaignState {
+        <<enumeration>>
+        NONE = -1
+        CREATED = 0
+        BUILDING_CHARACTER = 1
+    }
+
+    class Encounter {
+        monsters: dict
+        initiative_order: list
+        curr_index: int
+
+        + get_by_id(self, monster_id: str) -> MonstersDataBase.Monster | None
+        + get_first_in_order(self) -> str
+        + get_next_in_order(self) -> str
+        + damage(self, monster_id: str, damage: int)
+        + check_if_encounter_over(self) -> bool
+        + toString(self) -> str
+        + initiative_order_to_string(self) -> str
+        + remove(self, monster_id: str)
+    }
+}
+
+class StatTypeEnum {
+    <<enumeration>>
+    NONE = -1, "NONE"
+    STR = 0, "STR"
+    DEX = 1, "DEX"
+    CON = 2, "CON"
+    INT = 3, "INT"
+    WIS = 4, "WIS"
+    CHA = 5, "CHA"
+}
+
+namespace Items {
+    class ItemsDatabase{
+        items: dict
+
+        + get_item(item_name: str) -> Weapon | Armor | None
+    }
+
+    class Item {
+        + name: str
+        + weight: int
+    }
+
+    class WeaponProperty {
+        <<enumeration>>
+        AMMUNITION_30_120 = 0
+        AMMUNITION_80_320 = 1
+        AMMUNITION_150_600 = 2
+        FINESSE = 3
+        HEAVY = 4
+        LIGHT = 5
+        LOADING = 6
+        REACH = 7
+        SPECIAL = 8
+        THROWN_20_60 = 9
+        TWO_HANDED = 10
+        VERSATILE = 11
+    }
+
+    class WeaponType {
+        <<enumeration>>
+        SIMPLE_MELEE = 0
+        SIMPLE_RANGED = 1
+        MARTIAL_MELEE = 2
+        MARTIAL_RANGED = 3
+    }
+
+    class ArmorType {
+        <<enumeration>>
+        LIGHT = 0
+        MEDIUM = 1
+        HEAVY = 2
+        SHIELD = 3
+    }
+
+    class ArmorStr {
+        <<enumeration>>
+        NONE = -1
+        STR13 = 0
+        STR15 = 1
+    }
+
+    class DamageType {
+        <<enumeration>>
+        BLUDGEONING = 0
+        PIERCING = 1
+        SLASHING = 2
+    }
+
+    class Weapon
+    class Armor
+
+    class Cost {
+        + value: int
+    }
+
+    class CoinType {
+        <<enumeration>>
+        PP = 0
+        GP = 1
+        SP = 2
+        CP = 3
+    }
+}
+
+namespace User {
+    class CampaignMember {
+        member: discord.Member | None
+
+        inventory: dict
+        equipped_weapon: Weapon | None
+        equipped_armor: Armor | None
+        has_shield: bool
+
+        isAdventurer: bool
+        isDM: bool 
+
+        player_num: int
+
+        alignment: str
+        background: str
+        traits: str
+        ideals: str
+        bonds: str
+        flaws: str
+
+        + confirm_race(self)
+        + confirm_class(self)
+        + update_total_stat(self, stat_index: int)
+        + update_all_total_stat(self)
+        + update_stat_ch(self, stat_index: int)
+        + update_all_stat_ch(self)
+        + update_stats_modifiers(self)
+        + update_armor_class(self)
+        + update_max_hit_points(self)
+        + heal(self, heal_amount: int)
+        + get_info(self) -> str
+        + add_xp(self, xp: int)
+        + level_up(self)
+        + update_max_inventory_weight(self)
+        + update_curr_inventory_weight(self)
+        + get_inventory_str(self) -> str
+        + get_equipment_str(self) -> str
+        + get_known_spells_str(self) -> str
+        + get_prepared_spells_str(self) -> str
+        + update_total_speed(self)
+        + remove_item_from_inv(self, item_name: str, amount: int)
+        + add_item_to_inv(self, item_name: str, amount: int)
+    }
+
+    class UserStats {
+        STR_ch: discord.VoiceChannel | None
+        DEX_ch: discord.VoiceChannel | None
+        CON_ch: discord.VoiceChannel | None
+        INT_ch: discord.VoiceChannel | None
+        WIS_ch: discord.VoiceChannel | None
+        CHA_ch: discord.VoiceChannel | None
+
+        level: int
+        xp: int
+
+        total_speed: int
+        race_speed: int
+        speed_debuff: int
+
+        armor_class: int
+
+        maxHitPoints: int
+        currHitPoints: int
+
+        stats_modifiers: [int]
+        total_stats: [int]
+        rolled_stats: [int]
+        race_stats: [int]
+        equip_stats: [int]
+
+        stats_set_num: int
+        stats_set_bools [bool]
+
+        roll_list: [int]
+
+        max_inventory_weight: int
+        curr_inventory_weight: int
+    }
+
+    class SpellsInfo {
+        max_cantrips_known: int
+        max_spell_slots: int
+        curr_spell_slots: int
+        max_preparable_spells: int
+        prepared_spells: [str]
+        spells_known_list: [str]
+    }
+
+    class Proficiencies {
+        weapon_proficiencies: [WeaponType]
+        armor_proficiencies: [ArmorType]
+        saving_throw_proficiencies: [str]
+        race_proficiencies: [str]
+        class_proficiencies: [str]
+
+        proficiency_bonus: int
+    }
+
+    class Purse {
+        purse: [int]
+
+        + add(self, amount: int, coinType: int)
+        + remove(self, amount: int, coinType: int) -> bool
+        + get(self, coinType: CoinType) -> int
+        + getPurse(self) -> [int]
+        + toString(self) -> str
+    }
+
+    class AdvClass {
+        <<enumeration>>
+        CLERIC
+        FIGHTER
+        ROGUE
+        WIZARD
+    }
+
+    class RaceTypeEnum {
+        <<enumeration>>
+        DWARF
+        HILL_DWARF
+        MOUNTAIN_DWARF
+        ELF
+        HIGH_ELF
+        WOOD_ELF
+        HALFLING
+        STOUT
+        LIGHTFOOT
+        HUMAN
+    }
+}
+
+CampaignMember *-- Proficiencies: proficiencies
+CampaignMember *-- UserStats: stats
+CampaignMember *-- SpellsInfo: spells_info
+CampaignMember *-- RaceTypeEnum: race
+CampaignMember *-- AdvClass: adv_class
+CampaignMember *-- Purse: purse
+
+class constants {
+    + IDs
+}
+
+namespace Dices {
+    class Dice{
+        + faces: int
+
+        + throw(self) -> int
+        + throw_n(self, n) -> int
+    }
+
+    class D4 {
+        faces: int = 4
+    }
+    class D6 {
+        faces: int = 6
+    }
+    class D8 {
+        faces: int = 8
+    }
+    class D10 {
+        faces: int = 10
+    }
+    class D12 {
+        faces: int = 12
+    }
+    class D20 {
+        faces: int = 20
+    }
+    class D100 {
+        faces: int = 100
+    }
+}
+
+Dice <|-- D4
+Dice <|-- D6
+Dice <|-- D8
+Dice <|-- D10
+Dice <|-- D12
+Dice <|-- D20
+Dice <|-- D100
+
+namespace MonsterDatabase {
+    class MonstersDataBase {
+        monsters: dict
+
+        + get_monster(monster_name: str) -> Monster | None
+        + monster_info(monster_name: str) -> str
+        + get_all_monsters()
+    }
+
+    class Monster {
+        name: str
+        AC: int
+        HP: int
+
+        total_stats: [int]
+        stats_modifiers: [int]
+
+        attack_bonus: int
+        dice_num: int
+        damage_dice: Dice
+        damage_bonus: int
+
+        + calculate_modifiers(self)
+        + take_damage(self, damage: int) -> int
+        + attack(self, player_AC: int) -> int
+        + ability_check(self, ability: str)
+        + toString(self)
+    }
+}
+
+MonstersDataBase *-- Monster
+
+namespace Spells {
+    class Spell {
+        name: str
+        level: int
+        cast_time: str
+        cast_range: str
+        components: str
+        duration: str
+        description: str
+
+        + cast(caster: CampaignMember, params: str)
+    }
+    class Light
+    class Resistance
+    class MageHand
+    class SpareTheDying
+    class DetectMagic
+    class HealingWord
+    class Prestidigitation
+    class MagicMissile
+}
+Spell <|-- Light
+Spell <|-- Resistance
+Spell <|-- MageHand
+Spell <|-- SpareTheDying
+Spell <|-- DetectMagic
+Spell <|-- HealingWord
+Spell <|-- Prestidigitation
+Spell <|-- MagicMissile
+
+ItemsDatabase *-- Item
+
+Item <|-- Armor
+Item <|-- Weapon
+
+Armor *-- ArmorType : armorType
+Armor *-- ArmorStr : str_value
+
+Weapon *-- WeaponProperty : properties
+Weapon *-- WeaponType : weaponType
+Weapon *-- DamageType : damage_type
+
+Item *-- Cost : cost
+
+Cost *-- CoinType : coinType
+
+Campaign *-- Encounter : curr_encounter
+Campaign *-- CampaignState : campaign_state
+```
+
 # Setting up the DnD Discord Server
 
 **At the bottom you can find the command list**
